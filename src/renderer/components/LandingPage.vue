@@ -2,17 +2,18 @@
   <div>
     <div class="container-fluid" id="wrapper">
       <div class="row">
-        <button class="btn btn-default pull-left firstButton" @click='onSave'>Save</button>
-        <!-- <div class="dropdown">
-          <button class="btn btn-default btn-dropdown secondButton" @click="show = !show">
+        <button class="btn btn-default pull-left firstButton" @click='showModal'>Save As</button>
+        <div class="dropdown">
+          <button class="btn btn-default btn-dropdown secondButton" @click="showDropdown = !showDropdown">
             Profiles
           </button>
-          <div class="dropdown-content" v-if="show">
-            <div>Profile 1</div>
-            <div>Profile 2</div>
-            <div>Profile 3</div>
+          <div class="dropdown-content" v-if="showDropdown">
+            <div v-for="profile in profiles" :key="profile">
+              <span @click="loadProfile(profile)">{{profile}}</span>
+              <span @click="deleteProfile(profile)" class="icon icon-cancel deleteProfile"></span>
+            </div>
           </div>
-        </div> -->
+        </div>
 
       </div>
       <div class="row">
@@ -47,22 +48,30 @@
         </div>
       </div>
       </div>
+
+      <modal
+        v-show="isModalVisible"
+        @close="closeModal"
+      />
     </div>
   </div>
 </template>
 
 <script>
   import FileIngest from './LandingPage/FileIngest'
+  import Modal from './LandingPage/Modal.vue'
   const Shell = require('node-powershell')
   const settings = require('electron').remote.require('electron-settings')
   
   export default {
     name: 'landing-page',
-    components: { FileIngest },
+    components: { FileIngest, Modal },
     data: () => ({
-      paths: [],
-      numbers: 5,
-      show: false,
+      isModalVisible: false, // toggles visibility of the Save As modal
+      profiles: [], // array of user profiles
+      numbers: 5, // default number of program boxes
+      showDropdown: false, // toggles the profile picker dropdown
+      allSettings: {}, // object of all user settings
       programs: [
         {
           id: 1,
@@ -84,17 +93,34 @@
           id: 5,
           url: ''
         }
-      ]
+      ] // array of objects of programs, and their locations
     }),
     mounted () {
-      const mySettings = settings.getAll()
-      console.log(mySettings)
-      if (mySettings.userData) {
-        this.programs = mySettings.userData
-        this.numbers = this.programs.length
-      }
+      this.getProfiles()
     },
     methods: {
+      getProfiles () {
+        this.allSettings = settings.getAll()
+        console.log(this.allSettings)
+        if (this.allSettings) {
+          Object.entries(this.allSettings).forEach(
+            ([key, value]) => this.profiles.push(key)
+          )
+        }
+        console.log(this.profiles)
+      },
+      loadProfile (profile) {
+        console.log(profile)
+        this.showDropdown = false
+        this.programs = this.allSettings[profile]
+        this.numbers = this.programs.length
+      },
+      deleteProfile (profile) {
+        settings.delete(profile)
+        this.profiles = []
+        this.showDropdown = false
+        this.getProfiles()
+      },
       addUrl (data) {
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
         this.programs[objIndex].url = data.url
@@ -139,15 +165,24 @@
           }
         })
       },
-      onSave () {
-        console.log('Saving')
-        settings.set('userData', this.programs)
-      },
       ClearProgram (id) {
         const objIndex = this.programs.findIndex(obj => obj.id === id)
         this.programs[objIndex].url = ''
         this.programs.push([])
         this.programs.pop()
+      },
+      showModal () {
+        this.isModalVisible = true
+        this.showDropdown = false
+      },
+      closeModal (data) {
+        console.log(data)
+        this.isModalVisible = false
+        if (data) {
+          settings.set(data, this.programs)
+          this.profiles = []
+          this.getProfiles()
+        }
       }
     }
   }
@@ -227,9 +262,9 @@
 }
 
 .secondButton {
-    position: absolute;
-    top: 2.5rem;
-    left: 42px;
+  position: absolute;
+  top: 2.5rem;
+  left: 5.7rem;
 }
 
 .dropdown-content-hide {
@@ -247,13 +282,14 @@
 .dropdown-content {
   display: block;
   position: absolute;
-  top: -8px;
-  left: 42px;
+  top: 4.8rem;
+  left: 5.7rem;
   background-color: #f9f9f9;
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
   padding: 12px 16px;
   z-index: 1;
+  color: rgb(0, 0, 0);
 }
 
 /* Links inside the dropdown */
@@ -271,5 +307,16 @@
 
 .mt-1 {
   margin-top: 1rem;
+}
+
+.deleteProfile {
+  margin-left: 2rem;
+  color: red;
+  padding: .1rem 1rem;
+  border-radius: 25px;
+  cursor: pointer;
+}
+.deleteProfile:hover {
+  background: chartreuse;
 }
 </style>
