@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div id="wrapper container">
+    <div class="container-fluid" id="wrapper">
       <div class="row">
         <button class="btn btn-default pull-left firstButton" @click='onSave'>Save</button>
         <!-- <div class="dropdown">
@@ -24,16 +24,20 @@
       <div class="row">
         <button class="btn btn-primary" @click="submit">Start All Programs</button>
       </div>
-      <div class="row">
-        <div v-for="program in programs" :key="program.id" class="col-3 program">
-          <div class="user-select">
-            Choose your program
+      <div class="row mt-1">
+        <div v-for="(program, index) in programs" :key="program.id">
+        <div class="row" v-if="index !== 0 && (index % 4) === 0"></div>
+        <div class="col-md-3 program">
+          <div class="row">
+            <div class="user-select">
+              Choose your program
+            </div>
           </div>
           <div class="row">
-             <div class="col-6">
+             <div class="col-md-6">
               <file-ingest @load="addUrl" :input="program"></file-ingest>
             </div>
-            <div class="col-6">
+            <div class="col-md-6">
               <button class="btn btn-mini btn-default" @click="ClearProgram(program.id)">Clear</button>
             </div>
           </div>
@@ -41,6 +45,7 @@
             {{program.url}}
           </div>
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -167,37 +172,6 @@
 
   body { font-family: 'Source Sans Pro', sans-serif; }
 
-  #wrapper {
-    background:
-      radial-gradient(
-        ellipse at top left,
-        rgba(255, 255, 255, 1) 40%,
-        rgba(223, 223, 223, 0.9) 100%
-      );
-    height: 100vh;
-    padding: 20px 30px;
-    width: 100vw;
-  }
-
-  #logo {
-    height: auto;
-    margin-bottom: 20px;
-    width: 220px;
-  }
-
-  main {
-    display: flex;
-    justify-content: space-between;
-  }
-
-  main > div { flex-basis: 50%; }
-
-  .welcome {
-    color: #555;
-    font-size: 23px;
-    margin-bottom: 10px;
-  }
-
  .inputForm {
    max-width: 70%;
  }
@@ -241,18 +215,20 @@
 
 .program {
   border: solid rgb(0, 0, 255) thin;
-  padding: 0px 5px 20px 5px;
+  padding: 0px 5px 10px 5px;
   border-radius: 15px;
+  overflow-wrap: break-word;
 }
 
 .firstButton {
-  top: -31px;
+  top: 2.5rem;
+  left: 0.2rem;
   position: absolute;
 }
 
 .secondButton {
     position: absolute;
-    top: -31px;
+    top: 2.5rem;
     left: 42px;
 }
 
@@ -288,8 +264,12 @@
   display: block;
 }
 
-.small {
-  font-size: .8rem;
+.row {
+  margin-right: 0px !important;
+  margin-left: 0px !important;
 }
 
+.mt-1 {
+  margin-top: 1rem;
+}
 </style>
