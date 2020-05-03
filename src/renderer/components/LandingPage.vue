@@ -8,49 +8,54 @@
             Profiles
           </button>
           <div class="dropdown-content" v-if="showDropdown">
-            <div v-for="profile in profiles" :key="profile">
-              <span @click="loadProfile(profile)">{{profile}}</span>
-              <span @click="deleteProfile(profile)" class="icon icon-cancel deleteProfile"></span>
+            <div class="content" v-for="profile in profiles" :key="profile">
+              <button @click="loadProfile(profile)" class="btn btn-mini btn-primary pull-left">{{profile}}</button>
+              <button class="btn btn-mini btn-default rename" @click="renameProfile(profile)">Rename</button>
+              <span @click="deleteProfile(profile)" class="icon icon-cancel deleteProfile pull-right"></span>
+              <hr>
             </div>
           </div>
         </div>
+      </div>
 
-      </div>
-      <div class="row">
-        How many programs: {{numbers}}
-        <div class="slidecontainer">
-          <input type="range" min="1" max="20" value="5" class="slider" v-model="numbers" @change="onChange(numbers)">
-        </div>
-      </div>
-      <div class="row">
-        <button class="btn btn-primary" @click="submit">Start All Programs</button>
-      </div>
-      <div class="row mt-1">
-        <div v-for="(program, index) in programs" :key="program.id">
-        <div class="row" v-if="index !== 0 && (index % 4) === 0"></div>
-        <div class="col-md-3 program">
-          <div class="row">
-            <div class="user-select">
-              Choose your program
-            </div>
-          </div>
-          <div class="row">
-             <div class="col-md-6">
-              <file-ingest @load="addUrl" :input="program"></file-ingest>
-            </div>
-            <div class="col-md-6">
-              <button class="btn btn-mini btn-default" @click="ClearProgram(program.id)">Clear</button>
-            </div>
-          </div>
-          <div class="row small">
-            {{program.url}}
+      <div style="height: 100vh;" @click="showDropdown = false">
+        <div class="row">
+          How many programs: {{numbers}}
+          <div class="slidecontainer">
+            <input type="range" min="1" max="20" value="5" class="slider" v-model="numbers" @change="onChange(numbers)">
           </div>
         </div>
-      </div>
+        <div class="row">
+          <button class="btn btn-primary" @click="submit">Start All Programs</button>
+        </div>
+        <div class="row mt-1">
+          <div v-for="(program, index) in programs" :key="program.id">
+          <div class="row" v-if="index !== 0 && (index % 4) === 0"></div>
+            <div class="col-md-3 program">
+              <div class="row">
+                <div class="user-select">
+                  Choose your program
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <file-ingest @load="addUrl" :input="program"></file-ingest>
+                </div>
+                <div class="col-md-6">
+                  <button class="btn btn-mini btn-default" @click="ClearProgram(program.id)">Clear</button>
+                </div>
+              </div>
+              <div class="row small">
+                {{program.url}}
+              </div>
+          </div>
+          </div>
+        </div>
       </div>
 
       <modal
         v-show="isModalVisible"
+        :oldName="oldName"
         @close="closeModal"
       />
     </div>
@@ -72,6 +77,7 @@
       numbers: 5, // default number of program boxes
       showDropdown: false, // toggles the profile picker dropdown
       allSettings: {}, // object of all user settings
+      oldName: null, // old profile name when renaming profile
       programs: [
         {
           id: 1,
@@ -120,6 +126,11 @@
         this.profiles = []
         this.showDropdown = false
         this.getProfiles()
+      },
+      renameProfile (profile) {
+        console.log(profile)
+        this.oldName = profile
+        this.showModal()
       },
       addUrl (data) {
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
@@ -178,10 +189,20 @@
       closeModal (data) {
         console.log(data)
         this.isModalVisible = false
+        this.oldName = null
         if (data) {
-          settings.set(data, this.programs)
-          this.profiles = []
-          this.getProfiles()
+          // if renaming existing profile
+          if (data.old) {
+            const temp = this.allSettings[data.old]
+            settings.set(data.new, temp)
+            this.deleteProfile(data.old)
+
+          // if saving new profile
+          } else if (data.new) {
+            settings.set(data.new, this.programs)
+            this.profiles = []
+            this.getProfiles()
+          }
         }
       }
     }
@@ -256,15 +277,15 @@
 }
 
 .firstButton {
-  top: 2.5rem;
+  top: 1.9rem;
   left: 0.2rem;
   position: absolute;
 }
 
 .secondButton {
   position: absolute;
-  top: 2.5rem;
-  left: 5.7rem;
+  top: 1.9rem;
+  left: 3.7rem;
 }
 
 .dropdown-content-hide {
@@ -282,12 +303,12 @@
 .dropdown-content {
   display: block;
   position: absolute;
-  top: 4.8rem;
-  left: 5.7rem;
+  top: 3.3rem;
+  left: 3.7rem;
   background-color: #f9f9f9;
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  padding: 12px 16px;
+  padding: 12px 7px 0px;
   z-index: 1;
   color: rgb(0, 0, 0);
 }
@@ -309,6 +330,18 @@
   margin-top: 1rem;
 }
 
+.selectProfile {
+  cursor: pointer;
+}
+.selectProfile:hover {
+  background: rgb(216, 216, 216);
+}
+
+.rename {
+  margin-left: 15px;
+  margin-right: -8px;
+}
+
 .deleteProfile {
   margin-left: 2rem;
   color: red;
@@ -317,6 +350,12 @@
   cursor: pointer;
 }
 .deleteProfile:hover {
-  background: chartreuse;
+  background: rgb(216, 216, 216);
+}
+
+.content:hover, .content:focus {
+  background-color: rgb(228, 228, 228);
+  text-decoration: underline;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
 }
 </style>

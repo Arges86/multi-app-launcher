@@ -8,7 +8,8 @@
         aria-describedby="modalDescription"
       >
         <header class="modal-header" id="modalTitle">
-          Profile Name
+          <span v-if="oldName">Rename {{oldName}} to:</span>
+          <span v-else>Save Profile As:</span>
           <span @click="close" class="icon icon-cancel"></span>
         </header>
         <section class="modal-body" id="modalDescription">
@@ -29,6 +30,9 @@
 
 export default {
   name: 'modal',
+  props: {
+    oldName: ''
+  },
   data: () => ({
     name: ''
   }),
@@ -37,7 +41,7 @@ export default {
       this.$emit('close')
     },
     save () {
-      this.$emit('close', this.name)
+      this.$emit('close', {new: this.name, old: this.oldName})
     }
   }
 }
@@ -78,6 +82,14 @@ export default {
 .modal-footer {
   border-top: 1px solid rgb(238, 238, 238);
   justify-content: flex-end;
+}
+
+.modal-fade-enter, .modal-fade-leave-active {
+  opacity: 0;
+}
+
+.modal-fade-enter-active, .modal-fade-leave-active {
+  transition: opacity .5s ease
 }
 
 .modal-body {
