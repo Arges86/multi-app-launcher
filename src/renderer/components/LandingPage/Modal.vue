@@ -16,10 +16,10 @@
           <form>
             <div class="form-group">
               <label for="pofileName">Pofile Name</label>
-              <input type="text" id="pofileName" class="form-control" placeholder="Profile1" v-model="name"/>
+              <input type="text" id="pofileName" class="form-control" placeholder="Profile1" v-model="name" @keyup.enter="save"/>
             </div>
           </form>
-          <button class="btn btn-primary pull-right" @click="save">Save</button>
+          <button class="btn btn-primary pull-right" :disabled="!name" @click="save">Save</button>
         </section>
       </div>
     </div>
@@ -31,17 +31,25 @@
 export default {
   name: 'modal',
   props: {
-    oldName: ''
+    oldName: '', // If renaming profile, this is the existing name
+    reset: false // boolean value to nullify form so its blank
   },
   data: () => ({
-    name: ''
+    name: '' // user inputed name
   }),
+  watch: {
+    reset: function (data) {
+      this.name = null
+    }
+  },
   methods: {
     close () {
       this.$emit('close')
     },
     save () {
-      this.$emit('close', {new: this.name, old: this.oldName})
+      if (this.name) {
+        this.$emit('close', {new: this.name, old: this.oldName})
+      }
     }
   }
 }

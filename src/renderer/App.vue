@@ -3,8 +3,11 @@
     <header class='toolbar toolbar-header'>
       <h1 class='title'>App Launcher</h1>
       <div class='toolbar-actions'>
-         <button class="btn btn-default pull-right" @click='onClose'>
+         <button class="btn btn-mini btn-default pull-right buttonHover" @click='onClose'>
           <span class="icon icon-cancel"></span>
+        </button>
+        <button class="btn btn-mini btn-default pull-right buttonHover" @click="minimize">
+          <span class="icon icon-minus"></span>
         </button>
       </div>
     </header>
@@ -21,6 +24,9 @@ export default {
     onClose () {
       const window = remote.getCurrentWindow()
       window.close()
+    },
+    minimize () {
+      remote.getCurrentWindow().minimize()
     }
   }
 }
@@ -52,5 +58,9 @@ export default {
   .user-select {
     color: rgb(187, 225, 250);
   }
+}
+
+.buttonHover:hover {
+  background: rgb(160, 160, 160);
 }
 </style>

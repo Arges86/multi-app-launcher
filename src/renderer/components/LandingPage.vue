@@ -2,9 +2,9 @@
   <div>
     <div class="container-fluid" id="wrapper">
       <div class="row">
-        <button class="btn btn-default pull-left firstButton" @click='showModal'>Save As</button>
+        <button class="btn btn-default pull-left firstButton buttonHover" @click='showModal'>Save As</button>
         <div class="dropdown">
-          <button class="btn btn-default btn-dropdown secondButton" @click="showDropdown = !showDropdown">
+          <button class="btn btn-default btn-dropdown secondButton buttonHover" @click="showDropdown = !showDropdown">
             Profiles
           </button>
           <div class="dropdown-content" v-if="showDropdown">
@@ -55,6 +55,7 @@
 
       <modal
         v-show="isModalVisible"
+        :reset="isModalVisible"
         :oldName="oldName"
         @close="closeModal"
       />
@@ -107,16 +108,13 @@
     methods: {
       getProfiles () {
         this.allSettings = settings.getAll()
-        console.log(this.allSettings)
         if (this.allSettings) {
           Object.entries(this.allSettings).forEach(
             ([key, value]) => this.profiles.push(key)
           )
         }
-        console.log(this.profiles)
       },
       loadProfile (profile) {
-        console.log(profile)
         this.showDropdown = false
         this.programs = this.allSettings[profile]
         this.numbers = this.programs.length
@@ -128,7 +126,6 @@
         this.getProfiles()
       },
       renameProfile (profile) {
-        console.log(profile)
         this.oldName = profile
         this.showModal()
       },
@@ -139,10 +136,8 @@
         this.programs.pop()
       },
       onChange (v) {
-        console.log(v)
         const initial = this.programs.length
         const diff = v - initial
-        console.log(diff)
 
         // if adding to array
         if (diff > 0) {
@@ -163,8 +158,6 @@
         }
       },
       submit () {
-        console.log('Starting all programs...')
-
         this.programs.forEach(element => {
           if (element.url) {
             const ps = new Shell({
@@ -187,7 +180,6 @@
         this.showDropdown = false
       },
       closeModal (data) {
-        console.log(data)
         this.isModalVisible = false
         this.oldName = null
         if (data) {
