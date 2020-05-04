@@ -2,67 +2,83 @@
   <div>
     <div class="container-fluid" id="wrapper">
       <div class="row">
-        <button class="btn btn-default pull-left firstButton" @click='onSave'>Save</button>
-        <!-- <div class="dropdown">
-          <button class="btn btn-default btn-dropdown secondButton" @click="show = !show">
+        <button class="btn btn-default pull-left firstButton buttonHover" @click='showModal'>Save As</button>
+        <div class="dropdown">
+          <button class="btn btn-default btn-dropdown secondButton buttonHover" @click="showDropdown = !showDropdown">
             Profiles
           </button>
-          <div class="dropdown-content" v-if="show">
-            <div>Profile 1</div>
-            <div>Profile 2</div>
-            <div>Profile 3</div>
+          <div class="dropdown-content" v-if="showDropdown">
+            <div class="content" v-for="profile in profiles" :key="profile">
+              <button @click="loadProfile(profile)" class="btn btn-mini btn-primary pull-left">{{profile}}</button>
+              <button class="btn btn-mini btn-default rename" @click="renameProfile(profile)">Rename</button>
+              <span @click="deleteProfile(profile)" class="icon icon-cancel deleteProfile pull-right"></span>
+              <hr>
+            </div>
           </div>
-        </div> -->
+        </div>
+      </div>
 
-      </div>
-      <div class="row">
-        How many programs: {{numbers}}
-        <div class="slidecontainer">
-          <input type="range" min="1" max="20" value="5" class="slider" v-model="numbers" @change="onChange(numbers)">
-        </div>
-      </div>
-      <div class="row">
-        <button class="btn btn-primary" @click="submit">Start All Programs</button>
-      </div>
-      <div class="row mt-1">
-        <div v-for="(program, index) in programs" :key="program.id">
-        <div class="row" v-if="index !== 0 && (index % 4) === 0"></div>
-        <div class="col-md-3 program">
-          <div class="row">
-            <div class="user-select">
-              Choose your program
-            </div>
-          </div>
-          <div class="row">
-             <div class="col-md-6">
-              <file-ingest @load="addUrl" :input="program"></file-ingest>
-            </div>
-            <div class="col-md-6">
-              <button class="btn btn-mini btn-default" @click="ClearProgram(program.id)">Clear</button>
-            </div>
-          </div>
-          <div class="row small">
-            {{program.url}}
+      <div style="height: 100vh;" @click="showDropdown = false">
+        <div class="row">
+          How many programs: {{numbers}}
+          <div class="slidecontainer">
+            <input type="range" min="1" max="20" value="5" class="slider" v-model="numbers" @change="onChange(numbers)">
           </div>
         </div>
+        <div class="row">
+          <button class="btn btn-primary" @click="submit">Start All Programs</button>
+        </div>
+        <div class="row mt-1">
+          <div v-for="(program, index) in programs" :key="program.id">
+          <div class="row" v-if="index !== 0 && (index % 4) === 0"></div>
+            <div class="col-md-3 program">
+              <div class="row">
+                <div class="user-select">
+                  Choose your program
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <file-ingest @load="addUrl" :input="program"></file-ingest>
+                </div>
+                <div class="col-md-6">
+                  <button class="btn btn-mini btn-default" @click="ClearProgram(program.id)">Clear</button>
+                </div>
+              </div>
+              <div class="row small">
+                {{program.url}}
+              </div>
+          </div>
+          </div>
+        </div>
       </div>
-      </div>
+
+      <modal
+        v-show="isModalVisible"
+        :reset="isModalVisible"
+        :oldName="oldName"
+        @close="closeModal"
+      />
     </div>
   </div>
 </template>
 
 <script>
   import FileIngest from './LandingPage/FileIngest'
+  import Modal from './LandingPage/Modal.vue'
   const Shell = require('node-powershell')
   const settings = require('electron').remote.require('electron-settings')
   
   export default {
     name: 'landing-page',
-    components: { FileIngest },
+    components: { FileIngest, Modal },
     data: () => ({
-      paths: [],
-      numbers: 5,
-      show: false,
+      isModalVisible: false, // toggles visibility of the Save As modal
+      profiles: [], // array of user profiles
+      numbers: 5, // default number of program boxes
+      showDropdown: false, // toggles the profile picker dropdown
+      allSettings: {}, // object of all user settings
+      oldName: null, // old profile name when renaming profile
       programs: [
         {
           id: 1,
@@ -84,17 +100,35 @@
           id: 5,
           url: ''
         }
-      ]
+      ] // array of objects of programs, and their locations
     }),
     mounted () {
-      const mySettings = settings.getAll()
-      console.log(mySettings)
-      if (mySettings.userData) {
-        this.programs = mySettings.userData
-        this.numbers = this.programs.length
-      }
+      this.getProfiles()
     },
     methods: {
+      getProfiles () {
+        this.allSettings = settings.getAll()
+        if (this.allSettings) {
+          Object.entries(this.allSettings).forEach(
+            ([key, value]) => this.profiles.push(key)
+          )
+        }
+      },
+      loadProfile (profile) {
+        this.showDropdown = false
+        this.programs = this.allSettings[profile]
+        this.numbers = this.programs.length
+      },
+      deleteProfile (profile) {
+        settings.delete(profile)
+        this.profiles = []
+        this.showDropdown = false
+        this.getProfiles()
+      },
+      renameProfile (profile) {
+        this.oldName = profile
+        this.showModal()
+      },
       addUrl (data) {
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
         this.programs[objIndex].url = data.url
@@ -102,10 +136,8 @@
         this.programs.pop()
       },
       onChange (v) {
-        console.log(v)
         const initial = this.programs.length
         const diff = v - initial
-        console.log(diff)
 
         // if adding to array
         if (diff > 0) {
@@ -126,8 +158,6 @@
         }
       },
       submit () {
-        console.log('Starting all programs...')
-
         this.programs.forEach(element => {
           if (element.url) {
             const ps = new Shell({
@@ -139,15 +169,33 @@
           }
         })
       },
-      onSave () {
-        console.log('Saving')
-        settings.set('userData', this.programs)
-      },
       ClearProgram (id) {
         const objIndex = this.programs.findIndex(obj => obj.id === id)
         this.programs[objIndex].url = ''
         this.programs.push([])
         this.programs.pop()
+      },
+      showModal () {
+        this.isModalVisible = true
+        this.showDropdown = false
+      },
+      closeModal (data) {
+        this.isModalVisible = false
+        this.oldName = null
+        if (data) {
+          // if renaming existing profile
+          if (data.old) {
+            const temp = this.allSettings[data.old]
+            settings.set(data.new, temp)
+            this.deleteProfile(data.old)
+
+          // if saving new profile
+          } else if (data.new) {
+            settings.set(data.new, this.programs)
+            this.profiles = []
+            this.getProfiles()
+          }
+        }
       }
     }
   }
@@ -221,15 +269,15 @@
 }
 
 .firstButton {
-  top: 2.5rem;
+  top: 1.9rem;
   left: 0.2rem;
   position: absolute;
 }
 
 .secondButton {
-    position: absolute;
-    top: 2.5rem;
-    left: 42px;
+  position: absolute;
+  top: 1.9rem;
+  left: 3.7rem;
 }
 
 .dropdown-content-hide {
@@ -247,13 +295,14 @@
 .dropdown-content {
   display: block;
   position: absolute;
-  top: -8px;
-  left: 42px;
+  top: 3.3rem;
+  left: 3.7rem;
   background-color: #f9f9f9;
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  padding: 12px 16px;
+  padding: 12px 7px 0px;
   z-index: 1;
+  color: rgb(0, 0, 0);
 }
 
 /* Links inside the dropdown */
@@ -271,5 +320,34 @@
 
 .mt-1 {
   margin-top: 1rem;
+}
+
+.selectProfile {
+  cursor: pointer;
+}
+.selectProfile:hover {
+  background: rgb(216, 216, 216);
+}
+
+.rename {
+  margin-left: 15px;
+  margin-right: -8px;
+}
+
+.deleteProfile {
+  margin-left: 2rem;
+  color: red;
+  padding: .1rem 1rem;
+  border-radius: 25px;
+  cursor: pointer;
+}
+.deleteProfile:hover {
+  background: rgb(216, 216, 216);
+}
+
+.content:hover, .content:focus {
+  background-color: rgb(228, 228, 228);
+  text-decoration: underline;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
 }
 </style>
