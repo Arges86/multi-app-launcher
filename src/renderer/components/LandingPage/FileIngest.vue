@@ -31,7 +31,8 @@ export default {
         title: 'Find a Program',
         buttonLabel: 'Pick file',
         filters: [
-          {name: 'Executable', extensions: ['exe']}
+          {name: 'Executable', extensions: ['exe']},
+          { name: 'All Files', extensions: ['*'] }
         ],
         properties: ['openFile']
       }
@@ -45,7 +46,7 @@ export default {
 
         const output = {
           id: this.input.id,
-          url: path
+          url: path.toLowerCase()
         }
         this.$emit('load', output)
       }
