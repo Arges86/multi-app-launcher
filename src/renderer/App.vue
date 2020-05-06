@@ -61,6 +61,10 @@ export default {
 }
 
 .buttonHover:hover {
-  background: rgb(160, 160, 160);
+  background-image: linear-gradient(rgb(193, 193, 193), rgb(146, 145, 145));
+}
+
+.buttonPrimaryHover:hover {
+  background:rgb(59, 155, 245);
 }
 </style>

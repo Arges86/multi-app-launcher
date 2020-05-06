@@ -1,6 +1,6 @@
 <template>
   <div>
-    <button class="btn btn-default" type="file" accept=".exe" @click="openfile">
+    <button class="btn btn-default buttonHover" type="file" accept=".exe" @click="openfile">
       <span class="icon icon-cog"></span>
     </button>
   </div>
@@ -46,7 +46,7 @@ export default {
 
         const output = {
           id: this.input.id,
-          url: path.toLowerCase()
+          url: path
         }
         this.$emit('load', output)
       }

@@ -9,8 +9,8 @@
           </button>
           <div class="dropdown-content" v-if="showDropdown">
             <div class="content" v-for="profile in profiles" :key="profile">
-              <button @click="loadProfile(profile)" class="btn btn-mini btn-primary pull-left">{{profile}}</button>
-              <button class="btn btn-mini btn-default rename" @click="renameProfile(profile)">Rename</button>
+              <button @click="loadProfile(profile)" class="btn btn-mini btn-primary pull-left buttonPrimaryHover">{{profile}}</button>
+              <button class="btn btn-mini btn-default rename buttonHover" @click="renameProfile(profile)">Rename</button>
               <span @click="deleteProfile(profile)" class="icon icon-cancel deleteProfile pull-right"></span>
               <hr>
             </div>
@@ -26,7 +26,7 @@
           </div>
         </div>
         <div class="row">
-          <button class="btn btn-primary" @click="submit">Start All Programs</button>
+          <button class="btn btn-primary buttonPrimaryHover" @click="submit">Start All Programs</button>
         </div>
         <div class="row mt-1">
           <div v-for="(program, index) in programs" :key="program.id">
@@ -42,13 +42,13 @@
                   <file-ingest @load="addUrl" :input="program"></file-ingest>
                 </div>
                 <div class="col-md-6">
-                  <button class="btn btn-mini btn-default" @click="ClearProgram(program.id)">Clear</button>
+                  <button class="btn btn-mini btn-default buttonHover" @click="ClearProgram(program.id)">Clear</button>
                 </div>
               </div>
               <div v-if="program.url" class="row-no-gutters small">
                 <br>
                 <div class="col-md-2">
-                  <img v-if="program.icon" class="pull-left" :src="program.icon" alt="Programs Icon">
+                  <img @click="openSingle(program.url)" v-if="program.icon" class="pull-left buttonHover" :src="program.icon" alt="Programs Icon">
                 </div>
                 <div class="col-md-10">{{program.url}}</div>
               </div>
@@ -182,6 +182,9 @@
             shell.openItem(element.url)
           }
         })
+      },
+      openSingle (url) {
+        shell.openItem(url)
       },
       ClearProgram (id) {
         const objIndex = this.programs.findIndex(obj => obj.id === id)
@@ -380,4 +383,12 @@
   text-decoration: underline;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
 }
+
+img {
+  padding: 0px 4px;
+  border-radius: 10px;
+}
+/* img:hover, img:focus {
+  background-color: rgb(128, 128, 128);
+} */
 </style>
