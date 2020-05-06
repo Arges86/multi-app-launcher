@@ -1,7 +1,7 @@
 <template>
   <div id='app'>
     <header class='toolbar toolbar-header'>
-      <h1 class='title'>App Launcher</h1>
+      <h1 class='title'><strong>M</strong>ulti <strong>A</strong>pp <strong>L</strong>auncher</h1>
       <div class='toolbar-actions'>
          <button class="btn btn-mini btn-default pull-right buttonHover" @click='onClose'>
           <span class="icon icon-cancel"></span>

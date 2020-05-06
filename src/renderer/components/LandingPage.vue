@@ -48,7 +48,7 @@
               <div v-if="program.url" class="row-no-gutters small">
                 <br>
                 <div class="col-md-2">
-                  <img @click="openSingle(program.url)" v-if="program.icon" class="pull-left buttonHover" :src="program.icon" alt="Programs Icon">
+                  <img @click="openSingle(program.url)" v-if="program.icon" class="pull-left" :src="program.icon" alt="Programs Icon">
                 </div>
                 <div class="col-md-10">{{program.url}}</div>
               </div>
@@ -385,10 +385,10 @@
 }
 
 img {
-  padding: 0px 4px;
-  border-radius: 10px;
+  padding:  0px 4px 5px 0px;
+  border-radius: 15px;
 }
-/* img:hover, img:focus {
-  background-color: rgb(128, 128, 128);
-} */
+img:hover, img:focus {
+  background-image: radial-gradient(circle, rgb(193, 193, 193), rgba(146, 145, 145, 0));
+}
 </style>
