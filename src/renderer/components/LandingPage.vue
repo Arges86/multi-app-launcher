@@ -9,8 +9,8 @@
           </button>
           <div class="dropdown-content" v-if="showDropdown">
             <div class="content" v-for="profile in profiles" :key="profile">
-              <button @click="loadProfile(profile)" class="btn btn-mini btn-primary pull-left">{{profile}}</button>
-              <button class="btn btn-mini btn-default rename" @click="renameProfile(profile)">Rename</button>
+              <button @click="loadProfile(profile)" class="btn btn-mini btn-primary pull-left buttonPrimaryHover">{{profile}}</button>
+              <button class="btn btn-mini btn-default rename buttonHover" @click="renameProfile(profile)">Rename</button>
               <span @click="deleteProfile(profile)" class="icon icon-cancel deleteProfile pull-right"></span>
               <hr>
             </div>
@@ -26,7 +26,7 @@
           </div>
         </div>
         <div class="row">
-          <button class="btn btn-primary" @click="submit">Start All Programs</button>
+          <button class="btn btn-primary buttonPrimaryHover" @click="submit">Start All Programs</button>
         </div>
         <div class="row mt-1">
           <div v-for="(program, index) in programs" :key="program.id">
@@ -42,11 +42,15 @@
                   <file-ingest @load="addUrl" :input="program"></file-ingest>
                 </div>
                 <div class="col-md-6">
-                  <button class="btn btn-mini btn-default" @click="ClearProgram(program.id)">Clear</button>
+                  <button class="btn btn-mini btn-default buttonHover" @click="ClearProgram(program.id)">Clear</button>
                 </div>
               </div>
-              <div class="row small">
-                {{program.url}}
+              <div v-if="program.url" class="row-no-gutters small">
+                <br>
+                <div class="col-md-2">
+                  <img @click="openSingle(program.url)" v-if="program.icon" class="pull-left" :src="program.icon" alt="Programs Icon">
+                </div>
+                <div class="col-md-10">{{program.url}}</div>
               </div>
           </div>
           </div>
@@ -66,7 +70,9 @@
 <script>
   import FileIngest from './LandingPage/FileIngest'
   import Modal from './LandingPage/Modal.vue'
-  const Shell = require('node-powershell')
+  import path from 'path'
+  const { shell } = require('electron')
+  const app = require('electron').remote.app
   const settings = require('electron').remote.require('electron-settings')
   
   export default {
@@ -82,23 +88,28 @@
       programs: [
         {
           id: 1,
-          url: ''
+          url: '',
+          icon: ''
         },
         {
           id: 2,
-          url: ''
+          url: '',
+          icon: ''
         },
         {
           id: 3,
-          url: ''
+          url: '',
+          icon: ''
         },
         {
           id: 4,
-          url: ''
+          url: '',
+          icon: ''
         },
         {
           id: 5,
-          url: ''
+          url: '',
+          icon: ''
         }
       ] // array of objects of programs, and their locations
     }),
@@ -113,11 +124,20 @@
             ([key, value]) => this.profiles.push(key)
           )
         }
+        console.log(this.allSettings)
       },
       loadProfile (profile) {
         this.showDropdown = false
         this.programs = this.allSettings[profile]
         this.numbers = this.programs.length
+
+        this.programs.forEach(element => {
+          if (!element.icon) {
+            this.getImage(element)
+          }
+        })
+        this.programs.push([])
+        this.programs.pop()
       },
       deleteProfile (profile) {
         settings.delete(profile)
@@ -132,8 +152,7 @@
       addUrl (data) {
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
         this.programs[objIndex].url = data.url
-        this.programs.push([])
-        this.programs.pop()
+        this.getImage(data)
       },
       onChange (v) {
         const initial = this.programs.length
@@ -160,14 +179,12 @@
       submit () {
         this.programs.forEach(element => {
           if (element.url) {
-            const ps = new Shell({
-              executionPolicy: 'Bypass',
-              noProfile: true
-            })
-            ps.addCommand(`Start-Process -FilePath "${element.url}"`)
-            ps.invoke()
+            shell.openItem(element.url)
           }
         })
+      },
+      openSingle (url) {
+        shell.openItem(url)
       },
       ClearProgram (id) {
         const objIndex = this.programs.findIndex(obj => obj.id === id)
@@ -196,6 +213,22 @@
             this.getProfiles()
           }
         }
+      },
+      async getImage (data) {
+        let icon
+        try {
+          const NativeImage = await app.getFileIcon(path.normalize(data.url))
+          icon = NativeImage.toDataURL()
+
+        // sets a default icon
+        } catch (error) {
+          console.log(error)
+          icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEaSURBVFhH7ZTbCoJAEIaFCCKCCKJnLTpQVBdB14HQ00T0CqUP4AN41puJAVe92F3HRZegHfgQFvH7/1nQMmPmZ+Z8uYJOCm01vJe64PF8cZ+Ftho89DxPC8IAeZ73QpZlJWmattsAfsBavsk0yRsD3Ox7ST3A4uTC/OjC7ODCdO/AZOfAeOvAaPOB4foDg1UVwLZtIUmSqG2AIq9vgNcc5coBKHIWgNec0RhAdAUUOSJrjsRxrLYBihxBMa85QzkARY7ImjOkAURXQJEjKOY1Z0RRpLYBihyRNUe5cgCKHEEprzmjMYDoCqjImiNhGKptgApvA3V57wFkzbUGEMmDIGgfAKH84ShypQBdyn3fFwfQSaE1Y+bvx7K+efsbU5+Ow3MAAAAASUVORK5CYII='
+        }
+        const objIndex = this.programs.findIndex(obj => obj.id === data.id)
+        this.programs[objIndex].icon = icon
+        this.programs.push([])
+        this.programs.pop()
       }
     }
   }
@@ -349,5 +382,13 @@
   background-color: rgb(228, 228, 228);
   text-decoration: underline;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+}
+
+img {
+  padding:  0px 4px 5px 0px;
+  border-radius: 15px;
+}
+img:hover, img:focus {
+  background-image: radial-gradient(circle, rgb(193, 193, 193), rgba(146, 145, 145, 0));
 }
 </style>

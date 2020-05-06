@@ -1,7 +1,7 @@
 <template>
   <div id='app'>
     <header class='toolbar toolbar-header'>
-      <h1 class='title'>App Launcher</h1>
+      <h1 class='title'><strong>M</strong>ulti <strong>A</strong>pp <strong>L</strong>auncher</h1>
       <div class='toolbar-actions'>
          <button class="btn btn-mini btn-default pull-right buttonHover" @click='onClose'>
           <span class="icon icon-cancel"></span>
@@ -61,6 +61,10 @@ export default {
 }
 
 .buttonHover:hover {
-  background: rgb(160, 160, 160);
+  background-image: linear-gradient(rgb(193, 193, 193), rgb(146, 145, 145));
+}
+
+.buttonPrimaryHover:hover {
+  background:rgb(59, 155, 245);
 }
 </style>
