@@ -55,7 +55,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .text-reader {
   position: relative;
   overflow: hidden;

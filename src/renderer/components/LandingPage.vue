@@ -38,11 +38,37 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <file-ingest @load="addUrl" :input="program"></file-ingest>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
+                  <button class="btn btn-mini btn-primary" @click="showSearch(program.id)">
+                    <!-- <span class="icon" :class="[{whichTextBox == program.id ? 'icon-down-open-big' : 'icon-up-open-big'}]"></span> -->
+                    <span class="icon" :class="[whichTextBox == program.id ? 'icon-down-open-big' : 'icon-up-open-big']"></span>
+                  </button>
+                </div>
+                <div class="col-md-4">
                   <button class="btn btn-mini btn-default buttonHover" @click="ClearProgram(program.id)">Clear</button>
+                </div>
+              </div>
+              <div class="row" v-show="whichTextBox == program.id">
+                <form>
+                  <div class="form-group">
+                    <label for="pofileName">Search Program</label>
+                    <input type="text" id="pofileName" class="form-control" placeholder="Outlook" v-model="search" />
+                  </div>
+                </form>
+                <div  v-if="search && whichTextBox == program.id">
+                  <div class="card" v-for="(post, index) in filteredList.slice(0,10)" :key="post + index">
+                    <div class="row" @click="addUrl({id:program.id, url:post.path})">
+                      <div class="col-md-6">
+                        <programIcon :url="post.path "/>
+                      </div>
+                      <div class="col-md-6">
+                        <div style="margin-top: 8px;">{{post.name}}</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div v-if="program.url" class="row-no-gutters small">
@@ -70,6 +96,7 @@
 <script>
   import FileIngest from './LandingPage/FileIngest'
   import Modal from './LandingPage/Modal.vue'
+  import Vue from 'vue'
   import path from 'path'
   const { shell } = require('electron')
   const app = require('electron').remote.app
@@ -80,11 +107,16 @@
     components: { FileIngest, Modal },
     data: () => ({
       isModalVisible: false, // toggles visibility of the Save As modal
+      whichTextBox: null,
       profiles: [], // array of user profiles
       numbers: 5, // default number of program boxes
       showDropdown: false, // toggles the profile picker dropdown
       allSettings: {}, // object of all user settings
       oldName: null, // old profile name when renaming profile
+      allPrograms: [],
+      search: '',
+      icon: '',
+      searchId: 0,
       programs: [
         {
           id: 1,
@@ -115,6 +147,7 @@
     }),
     mounted () {
       this.getProfiles()
+      this.getList()
     },
     methods: {
       getProfiles () {
@@ -150,6 +183,12 @@
         this.showModal()
       },
       addUrl (data) {
+        if (data.url.endsWith('.lnk')) {
+          try {
+            data.url = shell.readShortcutLink(data.url).target
+          } catch (error) {}
+        }
+        this.whichTextBox = null
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
         this.programs[objIndex].url = data.url
         this.getImage(data)
@@ -214,6 +253,14 @@
           }
         }
       },
+      showSearch (data) {
+        this.search = null
+        if (this.whichTextBox === data) {
+          this.whichTextBox = null
+        } else {
+          this.whichTextBox = data
+        }
+      },
       async getImage (data) {
         let icon
         try {
@@ -229,9 +276,74 @@
         this.programs[objIndex].icon = icon
         this.programs.push([])
         this.programs.pop()
+      },
+      getList () {
+        const klawSync = require('klaw-sync')
+        try {
+          this.allPrograms = klawSync('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs', {nodir: true})
+          this.allPrograms.forEach(element => {
+            element.name = element.path.split('\\').pop().split('.')[0]
+          })
+        } catch (er) {
+          console.error(er)
+        }
+        console.dir(this.allPrograms)
+      },
+      getIcon (data) {
+        if (data.endsWith('.lnk')) {
+          try {
+            data = shell.readShortcutLink(data).target
+          } catch (error) {}
+        }
+        return app.getFileIcon(data)
+          .then(NativeImage => {
+            return NativeImage.toDataURL()
+          })
+      }
+    },
+    computed: {
+      filteredList () {
+        return this.allPrograms.filter(data => {
+          return data.name.toLowerCase().includes(this.search.toLowerCase())
+        })
       }
     }
   }
+
+// Takes the URL and gets the Icon, for search box
+Vue.component('programIcon', {
+    data: function () {
+      return {
+        icon: ''
+      }
+    },
+    props: {
+      url: '' // url path of the icon
+    },
+    mounted () {
+      this.getIcon(this.url)
+    },
+    watch: {
+      url: function (data) {
+        this.icon = null
+        this.getIcon(data)
+      }
+    },
+    methods: {
+      getIcon (data) {
+        if (data.endsWith('.lnk')) {
+          try {
+            data = shell.readShortcutLink(data).target
+          } catch (error) {}
+        }
+        app.getFileIcon(data)
+          .then(NativeImage => {
+            this.icon = NativeImage.toDataURL()
+          })
+      }
+    },
+    template: '<img :src="icon">'
+})
 </script>
 
 <style>
@@ -382,6 +494,10 @@
   background-color: rgb(228, 228, 228);
   text-decoration: underline;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+}
+
+input {
+  color: rgb(0, 0, 0);
 }
 
 img {

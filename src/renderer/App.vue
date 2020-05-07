@@ -45,6 +45,9 @@ export default {
   body{
     color: rgb(51, 51, 51);
   }
+  label {
+    color: rgb(0, 0, 0);
+  }
   .user-select {
     color: rgb(0, 0, 0)
   }
@@ -54,6 +57,9 @@ export default {
     /*dark theme*/
   body {
     color: rgb(218, 222, 224);
+  }
+  label {
+    color: rgb(255, 255, 255);
   }
   .user-select {
     color: rgb(187, 225, 250);
