@@ -2,17 +2,27 @@
   <div>
     <div class="container-fluid" id="wrapper">
       <div class="row">
-        <button class="btn btn-default pull-left firstButton buttonHover" @click='showModal'>Save As</button>
+        <button class="btn btn-default pull-left firstButton buttonHover" @click="showModal">Save As</button>
         <div class="dropdown">
-          <button class="btn btn-default btn-dropdown secondButton buttonHover" @click="showDropdown = !showDropdown">
-            Profiles
-          </button>
+          <button
+            class="btn btn-default btn-dropdown secondButton buttonHover"
+            @click="showDropdown = !showDropdown"
+          >Profiles</button>
           <div class="dropdown-content" v-if="showDropdown">
             <div class="content" v-for="profile in profiles" :key="profile">
-              <button @click="loadProfile(profile)" class="btn btn-mini btn-primary pull-left buttonPrimaryHover">{{profile}}</button>
-              <button class="btn btn-mini btn-default rename buttonHover" @click="renameProfile(profile)">Rename</button>
-              <span @click="deleteProfile(profile)" class="icon icon-cancel deleteProfile pull-right"></span>
-              <hr>
+              <button
+                @click="loadProfile(profile)"
+                class="btn btn-mini btn-primary pull-left buttonPrimaryHover"
+              >{{profile}}</button>
+              <button
+                class="btn btn-mini btn-default rename buttonHover"
+                @click="renameProfile(profile)"
+              >Rename</button>
+              <span
+                @click="deleteProfile(profile)"
+                class="icon icon-cancel deleteProfile pull-right"
+              ></span>
+              <hr />
             </div>
           </div>
         </div>
@@ -22,7 +32,15 @@
         <div class="row">
           How many programs: {{numbers}}
           <div class="slidecontainer">
-            <input type="range" min="1" max="20" value="5" class="slider" v-model="numbers" @change="onChange(numbers)">
+            <input
+              type="range"
+              min="1"
+              max="20"
+              value="5"
+              class="slider"
+              v-model="numbers"
+              @change="onChange(numbers)"
+            />
           </div>
         </div>
         <div class="row">
@@ -30,29 +48,69 @@
         </div>
         <div class="row mt-1">
           <div v-for="(program, index) in programs" :key="program.id">
-          <div class="row" v-if="index !== 0 && (index % 4) === 0"></div>
+            <div class="row" v-if="index !== 0 && (index % 4) === 0"></div>
             <div class="col-md-3 program">
               <div class="row">
-                <div class="user-select">
-                  Choose your program
-                </div>
+                <div class="user-select">Choose your program</div>
               </div>
               <div class="row">
-                <div class="col-md-6">
+                <div class="btn-group" style="padding-left: 5%;">
                   <file-ingest @load="addUrl" :input="program"></file-ingest>
+                  <button class="btn btn-default buttonHover"  @click="showSearch(program.id)">
+                    <span
+                      class="icon"
+                      :class="[whichTextBox == program.id ? 'icon-down-open-big' : 'icon-up-open-big']"
+                    ></span>&nbsp; Search 
+                  </button>
+                  <button class="btn btn-default buttonHover" @click="ClearProgram(program.id)">
+                    <span style="color: red;" class="icon icon-cancel"></span>Clear
+                  </button>
                 </div>
-                <div class="col-md-6">
-                  <button class="btn btn-mini btn-default buttonHover" @click="ClearProgram(program.id)">Clear</button>
+              </div>
+              <div class="row" v-show="whichTextBox == program.id">
+                <form>
+                  <div class="form-group mt-1">
+                    <label for="pofileName">Search Program</label>
+                    <input
+                      type="text"
+                      id="pofileName"
+                      class="form-control"
+                      placeholder="Outlook"
+                      v-model="search"
+                    />
+                  </div>
+                </form>
+                <div v-if="search && whichTextBox == program.id">
+                  <div
+                    class="card"
+                    v-for="(post, index) in filteredList.slice(0,10)"
+                    :key="post + index"
+                  >
+                    <div class="row list" @click="addUrl({id:program.id, url:post.path})">
+                      <div class="col-md-6">
+                        <programIcon :url="post.path " />
+                      </div>
+                      <div class="col-md-6">
+                        <div style="margin-top: 5px;">{{post.name}}</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div v-if="program.url" class="row-no-gutters small">
-                <br>
+                <br />
                 <div class="col-md-2">
-                  <img @click="openSingle(program.url)" v-if="program.icon" class="pull-left" :src="program.icon" alt="Programs Icon">
+                  <img
+                    @click="openSingle(program.url)"
+                    v-if="program.icon"
+                    class="pull-left"
+                    :src="program.icon"
+                    alt="Programs Icon"
+                  />
                 </div>
                 <div class="col-md-10">{{program.url}}</div>
               </div>
-          </div>
+            </div>
           </div>
         </div>
       </div>
@@ -70,7 +128,9 @@
 <script>
   import FileIngest from './LandingPage/FileIngest'
   import Modal from './LandingPage/Modal.vue'
+  import Vue from 'vue'
   import path from 'path'
+  import config from '../assets/config'
   const { shell } = require('electron')
   const app = require('electron').remote.app
   const settings = require('electron').remote.require('electron-settings')
@@ -80,11 +140,15 @@
     components: { FileIngest, Modal },
     data: () => ({
       isModalVisible: false, // toggles visibility of the Save As modal
+      whichTextBox: null,
       profiles: [], // array of user profiles
       numbers: 5, // default number of program boxes
       showDropdown: false, // toggles the profile picker dropdown
       allSettings: {}, // object of all user settings
       oldName: null, // old profile name when renaming profile
+      allPrograms: [], // array of applications found on default location
+      search: '', // string to filter 'allPrograms' by
+      searchId: 0, // which instnace of the 'programs' object is searching for an application
       programs: [
         {
           id: 1,
@@ -115,6 +179,7 @@
     }),
     mounted () {
       this.getProfiles()
+      this.getList()
     },
     methods: {
       getProfiles () {
@@ -124,7 +189,6 @@
             ([key, value]) => this.profiles.push(key)
           )
         }
-        console.log(this.allSettings)
       },
       loadProfile (profile) {
         this.showDropdown = false
@@ -150,6 +214,12 @@
         this.showModal()
       },
       addUrl (data) {
+        if (data.url.endsWith('.lnk')) {
+          try {
+            data.url = shell.readShortcutLink(data.url).target
+          } catch (error) {}
+        }
+        this.whichTextBox = null
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
         this.programs[objIndex].url = data.url
         this.getImage(data)
@@ -214,6 +284,14 @@
           }
         }
       },
+      showSearch (data) {
+        this.search = null
+        if (this.whichTextBox === data) {
+          this.whichTextBox = null
+        } else {
+          this.whichTextBox = data
+        }
+      },
       async getImage (data) {
         let icon
         try {
@@ -223,46 +301,92 @@
         // sets a default icon
         } catch (error) {
           console.log(error)
-          icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEaSURBVFhH7ZTbCoJAEIaFCCKCCKJnLTpQVBdB14HQ00T0CqUP4AN41puJAVe92F3HRZegHfgQFvH7/1nQMmPmZ+Z8uYJOCm01vJe64PF8cZ+Ftho89DxPC8IAeZ73QpZlJWmattsAfsBavsk0yRsD3Ox7ST3A4uTC/OjC7ODCdO/AZOfAeOvAaPOB4foDg1UVwLZtIUmSqG2AIq9vgNcc5coBKHIWgNec0RhAdAUUOSJrjsRxrLYBihxBMa85QzkARY7ImjOkAURXQJEjKOY1Z0RRpLYBihyRNUe5cgCKHEEprzmjMYDoCqjImiNhGKptgApvA3V57wFkzbUGEMmDIGgfAKH84ShypQBdyn3fFwfQSaE1Y+bvx7K+efsbU5+Ow3MAAAAASUVORK5CYII='
+          icon = config.defaultIcon
         }
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
         this.programs[objIndex].icon = icon
         this.programs.push([])
         this.programs.pop()
+      },
+      getList () {
+        const klawSync = require('klaw-sync')
+        try {
+          const url = (process.platform === 'win32') ? config.WindowsPath : config.LinuxPath
+          this.allPrograms = klawSync(url, {nodir: true})
+          this.allPrograms.forEach(element => {
+            element.name = element.path.split('\\').pop().split('.')[0]
+          })
+        } catch (er) {
+          console.error(er)
+        }
+      }
+    },
+    computed: {
+      filteredList () {
+        return this.allPrograms.filter(data => {
+          return data.name.toLowerCase().includes(this.search.toLowerCase())
+        })
       }
     }
   }
+
+// Takes the URL and gets the Icon, for search box
+Vue.component('programIcon', {
+    data: function () {
+      return {
+        icon: '' // icon's base64 encoded value
+      }
+    },
+    props: {
+      url: '' // url path of the icon
+    },
+    mounted () {
+      this.getIcon(this.url)
+    },
+    watch: {
+      url: function (data) {
+        this.icon = null
+        this.getIcon(data)
+      }
+    },
+    methods: {
+      getIcon (data) {
+        if (data.endsWith('.lnk')) {
+          try {
+            data = shell.readShortcutLink(data).target
+          } catch (error) {}
+        }
+        app.getFileIcon(data)
+          .then(NativeImage => {
+            this.icon = NativeImage.toDataURL()
+          })
+      }
+    },
+    template: '<img style="background-image:none" :src="icon">'
+})
 </script>
 
-<style>
+<style scoped>
+/* source-sans-pro-regular - latin */
+@font-face {
+  font-family: "Source Sans Pro";
+  font-style: normal;
+  font-weight: 400;
+  src: local("Source Sans Pro Regular"), local("SourceSansPro-Regular"),
+    url("~@/assets/fonts/source-sans-pro-v13-latin-regular.woff2")
+      format("woff2");
+}
 
-  /* source-sans-pro-regular - latin */
-  @font-face {
-    font-family: 'Source Sans Pro';
-    font-style: normal;
-    font-weight: 400;
-    src: local('Source Sans Pro Regular'), local('SourceSansPro-Regular'),
-      url('~@/assets/fonts/source-sans-pro-v13-latin-regular.woff2') format('woff2'),
-  }
+.inputForm {
+  max-width: 70%;
+}
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+.user-select {
+  -webkit-user-select: none;
+  cursor: default;
+}
 
-  body { font-family: 'Source Sans Pro', sans-serif; }
-
- .inputForm {
-   max-width: 70%;
- }
-
- .user-select {
-   -webkit-user-select: none;
-    cursor: default;
- }
-
- .slidecontainer {
+.slidecontainer {
   width: 100%; /* Width of the outside container */
 }
 
@@ -271,12 +395,12 @@
   -webkit-appearance: none;
   width: 100%;
   height: 15px;
-  border-radius: 5px;  
+  border-radius: 5px;
   background: #d3d3d3;
   outline: none;
   opacity: 0.7;
-  -webkit-transition: .2s;
-  transition: opacity .2s;
+  -webkit-transition: 0.2s;
+  transition: opacity 0.2s;
 }
 
 /* Mouse-over effects */
@@ -290,7 +414,7 @@
   width: 25px;
   height: 25px;
   background: rgb(34, 52, 209);
-  border-radius: 50%; 
+  border-radius: 50%;
   cursor: pointer;
 }
 
@@ -320,7 +444,7 @@
   left: 42px;
   background-color: #f9f9f9;
   min-width: 160px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   padding: 12px 16px;
   z-index: 1;
 }
@@ -332,7 +456,7 @@
   left: 3.7rem;
   background-color: #f9f9f9;
   min-width: 160px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   padding: 12px 7px 0px;
   z-index: 1;
   color: rgb(0, 0, 0);
@@ -370,7 +494,7 @@
 .deleteProfile {
   margin-left: 2rem;
   color: red;
-  padding: .1rem 1rem;
+  padding: 0.1rem 1rem;
   border-radius: 25px;
   cursor: pointer;
 }
@@ -378,17 +502,34 @@
   background: rgb(216, 216, 216);
 }
 
-.content:hover, .content:focus {
+.content:hover,
+.content:focus {
   background-color: rgb(228, 228, 228);
   text-decoration: underline;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+}
+
+.list:hover,
+.list:focus {
+  text-decoration: underline;
+  box-shadow: 0px 8px 16px 0px rgba(255, 0, 0, 0.2);
+  border-top: solid rgba(255, 0, 0, 0.39) 1px;
+}
+
+input {
+  color: rgb(0, 0, 0);
 }
 
 img {
-  padding:  0px 4px 5px 0px;
+  padding: 0px 4px 5px 0px;
   border-radius: 15px;
 }
-img:hover, img:focus {
-  background-image: radial-gradient(circle, rgb(193, 193, 193), rgba(146, 145, 145, 0));
+img:hover,
+img:focus {
+  background-image: radial-gradient(
+    circle,
+    rgb(193, 193, 193),
+    rgba(146, 145, 145, 0)
+  );
 }
 </style>

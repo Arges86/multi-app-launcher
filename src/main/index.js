@@ -24,7 +24,8 @@ function createWindow () {
     height: 563,
     useContentSize: true,
     width: 1000,
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#333' : '#E0E0E0',
+    transparent: true,
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#090979fa' : '#E0E0E0',
     frame: false,
     webPreferences: {
       nodeIntegration: true,
