@@ -40,6 +40,14 @@ export default {
   -webkit-app-region: drag;
 }
 
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body { font-family: 'Source Sans Pro', sans-serif; }
+
 @media screen and (prefers-color-scheme: light), screen and (prefers-color-scheme: no-preference) {
     /*light theme*/
   body{
