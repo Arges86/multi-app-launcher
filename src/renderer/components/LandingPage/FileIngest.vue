@@ -1,9 +1,9 @@
 <template>
-  <div>
+  <!-- <div> -->
     <button class="btn btn-default buttonHover" type="file" accept=".exe" @click="openfile">
-      <span class="icon icon-cog"></span>
+     Pick File <span style="color: green;" class="icon icon-cog"></span>
     </button>
-  </div>
+  <!-- </div> -->
 </template>
 
 <script>

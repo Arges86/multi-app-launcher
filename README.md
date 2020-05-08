@@ -7,7 +7,12 @@ This is a small [electron](https://www.electronjs.org/) application that allows 
 ### Usage 
 Simple open the app, then choose as many programs as you would like.  
 Increase the slider to get access to more program boxes.  
-Once All your programs are selected (by clicking on the gear icon and navigating to either the program's shortcut, or its location),  
+
+You can either find the program or shortcut manually by clicking the gear icon,  
+or search for it with the search dropdown, and find the program on the list.  
+![search](screenshots/search.png)
+
+Once All your programs are selected,  
 Simply click the 'Start All Programs' button to launch them all.  
 ![Screenshot](screenshots/loaded.png)
 
@@ -24,6 +29,10 @@ The dark and light theme are dependant on the Operating System theme.
 Each application is opened via `Electron.Shell.openItem`,   
 Which should provide a platform agnostic way of launching each application.  
 Profiles are saved in `%APPDATA%/<Your App>`.  
+
+Search looks in the default program list for the OS.  
+For Windows: `C:\ProgramData\Microsoft\Windows\Start Menu\Programs`
+For others: `/usr/share/applications`
 
 ### Build Setup
 

@@ -54,27 +54,22 @@
                 <div class="user-select">Choose your program</div>
               </div>
               <div class="row">
-                <div class="col-md-4">
+                <div class="btn-group" style="padding-left: 5%;">
                   <file-ingest @load="addUrl" :input="program"></file-ingest>
-                </div>
-                <div class="col-md-4">
-                  <button class="btn btn-mini btn-primary" @click="showSearch(program.id)">
+                  <button class="btn btn-default buttonHover"  @click="showSearch(program.id)">
                     <span
                       class="icon"
                       :class="[whichTextBox == program.id ? 'icon-down-open-big' : 'icon-up-open-big']"
-                    ></span>
+                    ></span>&nbsp; Search 
                   </button>
-                </div>
-                <div class="col-md-4">
-                  <button
-                    class="btn btn-mini btn-default buttonHover"
-                    @click="ClearProgram(program.id)"
-                  >Clear</button>
+                  <button class="btn btn-default buttonHover" @click="ClearProgram(program.id)">
+                    <span style="color: red;" class="icon icon-cancel"></span>Clear
+                  </button>
                 </div>
               </div>
               <div class="row" v-show="whichTextBox == program.id">
                 <form>
-                  <div class="form-group">
+                  <div class="form-group mt-1">
                     <label for="pofileName">Search Program</label>
                     <input
                       type="text"
@@ -371,7 +366,7 @@ Vue.component('programIcon', {
 })
 </script>
 
-<style>
+<style scoped>
 /* source-sans-pro-regular - latin */
 @font-face {
   font-family: "Source Sans Pro";
@@ -517,8 +512,8 @@ Vue.component('programIcon', {
 .list:hover,
 .list:focus {
   text-decoration: underline;
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  border-top: solid rgba(0, 0, 0, 0.3) 1px;
+  box-shadow: 0px 8px 16px 0px rgba(255, 0, 0, 0.2);
+  border-top: solid rgba(255, 0, 0, 0.39) 1px;
 }
 
 input {
