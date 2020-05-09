@@ -1,7 +1,7 @@
 {
-  "name": "app-launcher",
-  "version": "0.0.2",
-  "author": "Arges86",
+  "name": "multi-app-launcher",
+  "version": "0.0.3",
+  "author": "Stephen Thompson",
   "description": "Multi App Launcher",
   "license": "MIT",
   "main": "./dist/electron/main.js",
@@ -19,8 +19,8 @@
     "postinstall": "npm run lint:fix"
   },
   "build": {
-    "productName": "app-launcher",
-    "appId": "app-launcher",
+    "productName": "multi-app-launcher",
+    "appId": "multi-app-launcher",
     "directories": {
       "output": "build"
     },
@@ -97,7 +97,7 @@
     "mini-css-extract-plugin": "0.4.0",
     "multispinner": "^0.2.1",
     "node-loader": "^0.6.0",
-    "node-sass": "^4.14.0",
+    "node-sass": "^4.14.1",
     "sass-loader": "^8.0.2",
     "style-loader": "^1.2.1",
     "url-loader": "^4.1.0",
@@ -107,7 +107,7 @@
     "vue-template-compiler": "^2.5.16",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.0.8",
-    "webpack-dev-server": "^3.1.4",
+    "webpack-dev-server": "^3.11.0",
     "webpack-hot-middleware": "^2.22.2",
     "webpack-merge": "^4.1.3"
   }
