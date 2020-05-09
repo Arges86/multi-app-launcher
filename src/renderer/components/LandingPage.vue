@@ -46,7 +46,7 @@
         <div class="row">
           <button class="btn btn-primary buttonPrimaryHover" @click="submit">Start All Programs</button>
         </div>
-        <div class="row mt-1">
+        <div class="row mt-1 scrollable">
           <div v-for="(program, index) in programs" :key="program.id">
             <div class="row" v-if="index !== 0 && (index % 4) === 0"></div>
             <div class="col-md-3 program">
@@ -259,6 +259,7 @@
       ClearProgram (id) {
         const objIndex = this.programs.findIndex(obj => obj.id === id)
         this.programs[objIndex].url = ''
+        this.search = null
         this.programs.push([])
         this.programs.pop()
       },
@@ -377,6 +378,32 @@ Vue.component('programIcon', {
       format("woff2");
 }
 
+/* Scorllbar */
+.scrollable {
+  overflow-y: auto;
+  height: 75vh;
+}
+.scrollable::-webkit-scrollbar-track {
+  background-color: #F5F5F5;
+  border-radius: 10px;
+}
+.scrollable::-webkit-scrollbar {
+  width: 10px;
+  background-color: #F5F5F5;
+}
+.scrollable::-webkit-scrollbar-thumb {
+  background-color: #3366FF;
+  border-radius: 10px;
+  background-image: -webkit-linear-gradient(0deg,
+    rgba(255, 255, 255, 0.5) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0.5) 75%,
+    transparent 75%,
+    transparent)
+}
+
 .inputForm {
   max-width: 70%;
 }
@@ -411,10 +438,13 @@ Vue.component('programIcon', {
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
+  display: block;
+  background: black;
+  border-radius: 100%;
   width: 25px;
   height: 25px;
-  background: rgb(34, 52, 209);
-  border-radius: 50%;
+  margin: 0;
+  background: radial-gradient(circle at 10px 10px, #5cabff, #000);
   cursor: pointer;
 }
 

@@ -56,11 +56,11 @@ body {
   position: absolute;
 }
   
-
+/*light theme*/
 @media screen and (prefers-color-scheme: light), screen and (prefers-color-scheme: no-preference) {
-    /*light theme*/
   body{
     color: rgb(51, 51, 51);
+    background: linear-gradient(180deg, rgba(172,172,172,1) 0%, rgba(191,191,191,1) 26%, rgba(219,219,219,1) 92%, rgba(255,255,255,0.8491597322522759) 100%);
   }
   label {
     color: rgb(0, 0, 0);
@@ -70,8 +70,8 @@ body {
   }
 }
 
+/*dark theme*/
 @media screen and (prefers-color-scheme: dark) {
-    /*dark theme*/
   body {
     color: rgb(218, 222, 224);
     background: linear-gradient(180deg, rgba(172,172,172,1) 0%, rgba(2,0,36,1) 26%, rgba(5,5,82,1) 92%, rgba(9,9,121,0.8491597322522759) 100%);
