@@ -1,19 +1,38 @@
 # Mult App Launcher
 
-> Multi App Launcher for Windows
+> Multi App Launcher
 
-This is a small [electron](https://www.electronjs.org/) application that allows up to 20 applications to be launched simultaneously.  
-Profile can be saved so each day you don't have to open each application one at a time.
+This is a small [electron](https://www.electronjs.org/) application that allows multiple applications to be launched simultaneously.  
 
-### Usage
-App is currently Windows only (requires powershell).  
-Once installed, can load up to 20 app shortcuts to start.  
-Profile is saved in `%APPDATA%/<Your App>`.  
+### Usage 
+Simple open the app, then choose as many programs as you would like.  
+Increase the slider to get access to more program boxes.  
+
+You can either find the program or shortcut manually by clicking the gear icon,  
+or search for it with the search dropdown, and find the program on the list.  
+![search](screenshots/search.png)
+
+Once All your programs are selected,  
+Simply click the 'Start All Programs' button to launch them all.  
+![Screenshot](screenshots/loaded.png)
+
+Once you have all the programs you like, simple save your profile.  
+![SaveAs](screenshots/saveas.png)
+
+You can have as many profiles as you like.  
+![Profile](screenshots/profiles.png)
+
+### Theme
+The dark and light theme are dependant on the Operating System theme.
 
 ### How it works
-On launch it loads the profile from save (if it exists).  
-Once run, it calls the Powershell command `Start-Process -FilePath <PathToFile>` to launch program.  
+Each application is opened via `Electron.Shell.openItem`,   
+Which should provide a platform agnostic way of launching each application.  
+Profiles are saved in `%APPDATA%/<Your App>`.  
 
+Search looks in the default program list for the OS.  
+For Windows: `C:\ProgramData\Microsoft\Windows\Start Menu\Programs`
+For others: `/usr/share/applications`
 
 ### Build Setup
 

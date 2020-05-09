@@ -1,6 +1,6 @@
 'use strict'
 
-import { app, BrowserWindow, nativeTheme } from 'electron'
+import { app, BrowserWindow } from 'electron'
 const contextMenu = require('electron-context-menu')
 
 /**
@@ -24,7 +24,8 @@ function createWindow () {
     height: 563,
     useContentSize: true,
     width: 1000,
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#333' : '#E0E0E0',
+    transparent: true,
+    backgroundColor: '#090979fa',
     frame: false,
     webPreferences: {
       nodeIntegration: true,
@@ -45,10 +46,6 @@ function createWindow () {
     showSearchWithGoogle: false
   })
 }
-
-nativeTheme.on('updated', function theThemeHasChanged () {
-  mainWindow.backgroundColor = nativeTheme.shouldUseDarkColors ? '#333' : '#E0E0E0'
-})
 
 app.on('ready', createWindow)
 

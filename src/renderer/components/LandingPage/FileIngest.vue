@@ -1,9 +1,9 @@
 <template>
-  <div>
-    <button class="btn btn-default" type="file" accept=".exe" @click="openfile">
-      <span class="icon icon-cog"></span>
+  <!-- <div> -->
+    <button class="btn btn-default buttonHover" type="file" accept=".exe" @click="openfile">
+     Pick File <span style="color: green;" class="icon icon-cog"></span>
     </button>
-  </div>
+  <!-- </div> -->
 </template>
 
 <script>
@@ -31,7 +31,8 @@ export default {
         title: 'Find a Program',
         buttonLabel: 'Pick file',
         filters: [
-          {name: 'Executable', extensions: ['exe']}
+          {name: 'Executable', extensions: ['exe']},
+          { name: 'All Files', extensions: ['*'] }
         ],
         properties: ['openFile']
       }
@@ -54,7 +55,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .text-reader {
   position: relative;
   overflow: hidden;
