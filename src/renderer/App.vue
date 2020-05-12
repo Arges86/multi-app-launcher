@@ -1,7 +1,7 @@
 <template>
   <div id='app'>
     <header class='toolbar toolbar-header'>
-      <img class="ProgramIcon" src="~@/assets/icon.png">
+      <img @click="getMenu" class="ProgramIcon" src="~@/assets/icon.png">
       <h1 class='title'><strong>M</strong>ulti <strong>A</strong>pp <strong>L</strong>auncher</h1>
       <div class='toolbar-actions'>
          <button class="btn btn-mini btn-default pull-right buttonHover" @click='onClose'>
@@ -21,6 +21,9 @@ const remote = require('electron').remote
 
 export default {
   name: 'bulk-modem-tool',
+  data: () => ({
+    dropdown: false
+  }),
   methods: {
     onClose () {
       const window = remote.getCurrentWindow()
@@ -28,6 +31,26 @@ export default {
     },
     minimize () {
       remote.getCurrentWindow().minimize()
+    },
+    getMenu () {
+      const BrowserWindow = remote.BrowserWindow
+      console.log('Opening window')
+      const winURL = process.env.NODE_ENV === 'development'
+        ? 'http://localhost:9080/#/info'
+        : `file://${__dirname}/index.html#info`
+
+      const window = new BrowserWindow({
+        height: 300,
+        width: 300,
+        useContentSize: true,
+        frame: true,
+        webPreferences: {
+          nodeIntegration: true,
+          nodeIntegrationInWorker: true
+        }
+      })
+      window.setMenu(null)
+      window.loadURL(winURL)
     }
   }
 }
@@ -54,6 +77,7 @@ body {
 .ProgramIcon {
   width: 29px;
   position: absolute;
+  -webkit-app-region: no-drag !important;
 }
   
 /*light theme*/
