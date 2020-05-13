@@ -53,6 +53,7 @@
     }
   },
   "dependencies": {
+    "axios": "^0.19.2",
     "electron-context-menu": "^1.0.0",
     "electron-settings": "^3.2.0",
     "klaw-sync": "^6.0.0",

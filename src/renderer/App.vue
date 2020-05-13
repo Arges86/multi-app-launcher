@@ -1,7 +1,9 @@
 <template>
-  <div id='app'>
+  <div id='app' :class="[blur ? 'blur-app' : '']">
     <header class='toolbar toolbar-header'>
-      <img class="ProgramIcon" src="~@/assets/icon.png">
+      <img @click="getMenu" class="ProgramIcon" src="~@/assets/icon.png">
+      <span v-if="checkingStatus" class="icon icon-arrows-ccw status-icon"></span>
+      <span v-if="showStatus" @click="getMenu" class="icon icon-info-circled status-icon"></span>
       <h1 class='title'><strong>M</strong>ulti <strong>A</strong>pp <strong>L</strong>auncher</h1>
       <div class='toolbar-actions'>
          <button class="btn btn-mini btn-default pull-right buttonHover" @click='onClose'>
@@ -17,10 +19,19 @@
 </template>
 
 <script>
+import github from './services/github'
 const remote = require('electron').remote
 
 export default {
   name: 'bulk-modem-tool',
+  data: () => ({
+    showStatus: false, // if update available icon is shown
+    checkingStatus: false, // if checking for update icon is shown
+    blur: false // toggles whole application blur
+  }),
+  mounted () {
+    this.getReleases()
+  },
   methods: {
     onClose () {
       const window = remote.getCurrentWindow()
@@ -28,6 +39,53 @@ export default {
     },
     minimize () {
       remote.getCurrentWindow().minimize()
+    },
+    async getReleases () {
+      this.checkingStatus = true
+      try {
+        const release = await github.getReleases()
+        const latestVersion = release[0].tag_name
+        const semver = require('semver')
+        this.checkingStatus = false
+        if (semver.gt(latestVersion, remote.app.getVersion())) {
+          this.showStatus = true
+        }
+      } catch (error) {
+        this.checkingStatus = false
+      }
+    },
+    getMenu () {
+      const BrowserWindow = remote.BrowserWindow
+      const winURL = process.env.NODE_ENV === 'development'
+        ? 'http://localhost:9080/#/info'
+        : `file://${__dirname}/index.html#info`
+      const top = remote.getCurrentWindow()
+      const x = (top.getPosition()[0]) + 50
+      const y = (top.getPosition()[1]) + 50
+      this.blur = true
+
+      const window = new BrowserWindow({
+        height: 300,
+        width: 300,
+        x,
+        y,
+        minimizable: false,
+        maximizable: false,
+        useContentSize: true,
+        type: 'toolbar',
+        frame: true,
+        parent: top,
+        modal: true,
+        webPreferences: {
+          nodeIntegration: true
+        }
+      })
+      window.setMenu(null)
+      window.loadURL(winURL)
+
+      window.on('close', () => {
+        this.blur = false
+      })
     }
   }
 }
@@ -54,6 +112,7 @@ body {
 .ProgramIcon {
   width: 29px;
   position: absolute;
+  -webkit-app-region: no-drag !important;
 }
   
 /*light theme*/
@@ -90,5 +149,18 @@ body {
 
 .buttonPrimaryHover:hover {
   background:rgb(59, 155, 245);
+}
+
+.blur-app{
+  filter: blur(1px);
+}
+
+.status-icon {
+  color: black;
+  position: absolute;
+  left: 19px;
+  top: 15px;
+  color: rgb(0, 0, 139);
+  -webkit-app-region: no-drag !important;
 }
 </style>
