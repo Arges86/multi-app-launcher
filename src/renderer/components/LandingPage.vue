@@ -39,7 +39,6 @@
               value="5"
               class="slider"
               v-model="numbers"
-              @change="onChange(numbers)"
             />
           </div>
         </div>
@@ -224,28 +223,6 @@
         this.programs[objIndex].url = data.url
         this.getImage(data)
       },
-      onChange (v) {
-        const initial = this.programs.length
-        const diff = v - initial
-
-        // if adding to array
-        if (diff > 0) {
-          for (let index = 0; index < diff; index++) {
-            console.log(index)
-            this.programs.push({
-              id: initial + (index + 1),
-              url: ''
-            })
-          }
-        }
-
-        // if removing from array
-        if (diff < 0) {
-          for (let index = 0; index < Math.abs(diff); index++) {
-            this.programs.pop()
-          }
-        }
-      },
       submit () {
         this.programs.forEach(element => {
           if (element.url) {
@@ -319,6 +296,29 @@
           })
         } catch (er) {
           console.error(er)
+        }
+      }
+    },
+    watch: {
+      numbers: function () {
+        const initial = this.programs.length
+        const diff = this.numbers - initial
+
+        // if adding to array
+        if (diff > 0) {
+          for (let index = 0; index < diff; index++) {
+            this.programs.push({
+              id: initial + (index + 1),
+              url: ''
+            })
+          }
+        }
+
+        // if removing from array
+        if (diff < 0) {
+          for (let index = 0; index < Math.abs(diff); index++) {
+            this.programs.pop()
+          }
         }
       }
     },
