@@ -32,7 +32,7 @@ export default {
   name: 'app-info',
   data: () => ({
     version: remote.app.getVersion(), // applications sem version
-    name: remote.app.getName(), // applications name from json file
+    name: remote.app.name, // applications name from json file
     ProcessMetric: remote.app.getAppMetrics(), // Array of ProcessMetric objects
     releases: [], // return from querying github releases
     updateStatus: '', // text to display on apps status
