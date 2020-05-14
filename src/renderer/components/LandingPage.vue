@@ -68,7 +68,7 @@
               </div>
               <div class="row" v-if="!program.url && whichTextBox != program.id" >
                 <div class="box-input" @drop.prevent="addFile($event, program.id)" @dragenter.prevent @dragover.prevent="dragOver" @dragleave="dragLeave">
-                 <div class="inner-box"> Drag and Drop</div>
+                  <div class="inner-box"> Drag and Drop</div>
                 </div>
               </div>
               <div class="row" v-show="whichTextBox == program.id">
@@ -531,11 +531,13 @@ Vue.component('programIcon', {
   outline: 2px dashed #92b0b3;
   outline-offset: -10px;
   transition: outline-offset .15s ease-in-out, background-color .15s linear;
+  z-index: 2;
 }
 .inner-box {
   position: absolute;
   top: 54%;
   left: 34%;
+  z-index: -1;
 }
 
 .selectProfile {
