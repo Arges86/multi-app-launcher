@@ -1,6 +1,6 @@
 {
   "name": "multi-app-launcher",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "author": "Stephen Thompson",
   "description": "Multi App Launcher",
   "license": "MIT",
@@ -60,7 +60,7 @@
     "vue": "^2.5.16",
     "vue-electron": "^1.0.6",
     "vue-router": "^3.0.1",
-    "vuex": "^3.0.1",
+    "vuex": "^3.4.0",
     "vuex-electron": "^1.0.0"
   },
   "devDependencies": {
