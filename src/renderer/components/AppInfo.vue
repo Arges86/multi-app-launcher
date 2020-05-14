@@ -59,7 +59,7 @@ export default {
       const latestVersion = data[0].tag_name
 
       // if the current app version is less than latest in github
-      if (semver.gt(this.version, latestVersion)) {
+      if (semver.gt(latestVersion, this.version)) {
         this.updateStatus = 'Newer version available!'
         this.updateAvailable = true
       } else {
