@@ -4,13 +4,21 @@
 
 This is a small [electron](https://www.electronjs.org/) application that allows multiple applications to be launched simultaneously.  
 
-### Usage 
+## Install
+Go to the [release page](https://github.com/Arges86/multi-app-launcher/releases) and download the latest version.  
+The portable, or installable .exe file both are available.  
+The installable instance will be a little faster running.  
+
+## Usage 
 Simple open the app, then choose as many programs as you would like.  
 Increase the slider to get access to more program boxes.  
 
-You can either find the program or shortcut manually by clicking the gear icon,  
-or search for it with the search dropdown, and find the program on the list.  
-![search](screenshots/search.png)
+There are three ways to add a program to the list:  
+* Find the program or shortcut manually by clicking the gear icon.   
+* Drag and drop the program, or link thereto into `Drag and Drop` field.   
+* Or search for it with the search dropdown, and find the program on the list.   
+
+   ![search](screenshots/search.png)
 
 Once All your programs are selected,  
 Simply click the 'Start All Programs' button to launch them all.  
@@ -21,6 +29,12 @@ Once you have all the programs you like, simple save your profile.
 
 You can have as many profiles as you like.  
 ![Profile](screenshots/profiles.png)
+
+### Updates
+The program checks for any updates at launch.   
+If there are any updates available, a notification will appear on the icon in the top left.   
+Click the icon, to open the about window with a download link.   
+![Notice](screenshots/updateNotice.png)
 
 ### Theme
 The dark and light theme are dependant on the Operating System theme.
@@ -33,6 +47,9 @@ Profiles are saved in `%APPDATA%/<Your App>`.
 Search looks in the default program list for the OS.  
 For Windows: `C:\ProgramData\Microsoft\Windows\Start Menu\Programs`
 For others: `/usr/share/applications`
+
+Updates query Github for the newest release.  
+if the semantic version at Github is greater than installed, a notification appears.  
 
 ### Build Setup
 

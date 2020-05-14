@@ -39,7 +39,6 @@
               value="5"
               class="slider"
               v-model="numbers"
-              @change="onChange(numbers)"
             />
           </div>
         </div>
@@ -65,6 +64,11 @@
                   <button class="btn btn-default buttonHover" @click="ClearProgram(program.id)">
                     <span style="color: red;" class="icon icon-cancel"></span>Clear
                   </button>
+                </div>
+              </div>
+              <div class="row" v-if="!program.url && whichTextBox != program.id" >
+                <div class="box-input" @drop.prevent="addFile($event, program.id)" @dragenter.prevent @dragover.prevent="dragOver" @dragleave="dragLeave">
+                  <div class="inner-box"> Drag and Drop</div>
                 </div>
               </div>
               <div class="row" v-show="whichTextBox == program.id">
@@ -224,26 +228,9 @@
         this.programs[objIndex].url = data.url
         this.getImage(data)
       },
-      onChange (v) {
-        const initial = this.programs.length
-        const diff = v - initial
-
-        // if adding to array
-        if (diff > 0) {
-          for (let index = 0; index < diff; index++) {
-            console.log(index)
-            this.programs.push({
-              id: initial + (index + 1),
-              url: ''
-            })
-          }
-        }
-
-        // if removing from array
-        if (diff < 0) {
-          for (let index = 0; index < Math.abs(diff); index++) {
-            this.programs.pop()
-          }
+      addFile (event, id) {
+        if (event.dataTransfer.files[0]) {
+          this.addUrl({id: id, url: event.dataTransfer.files[0].path})
         }
       },
       submit () {
@@ -319,6 +306,35 @@
           })
         } catch (er) {
           console.error(er)
+        }
+      },
+      dragOver (event) {
+        event.target.style['outline-offset'] = '-5px'
+      },
+      dragLeave (event) {
+        event.target.style['outline-offset'] = '-10px'
+      }
+    },
+    watch: {
+      numbers: function () {
+        const initial = this.programs.length
+        const diff = this.numbers - initial
+
+        // if adding to array
+        if (diff > 0) {
+          for (let index = 0; index < diff; index++) {
+            this.programs.push({
+              id: initial + (index + 1),
+              url: ''
+            })
+          }
+        }
+
+        // if removing from array
+        if (diff < 0) {
+          for (let index = 0; index < Math.abs(diff); index++) {
+            this.programs.pop()
+          }
         }
       }
     },
@@ -453,6 +469,7 @@ Vue.component('programIcon', {
   padding: 0px 5px 10px 5px;
   border-radius: 15px;
   overflow-wrap: break-word;
+  min-height: 116px;
 }
 
 .firstButton {
@@ -507,6 +524,20 @@ Vue.component('programIcon', {
 
 .mt-1 {
   margin-top: 1rem;
+}
+
+.box-input {
+  min-height: 55px;
+  outline: 2px dashed #92b0b3;
+  outline-offset: -10px;
+  transition: outline-offset .15s ease-in-out, background-color .15s linear;
+  z-index: 2;
+}
+.inner-box {
+  position: absolute;
+  top: 54%;
+  left: 34%;
+  z-index: -1;
 }
 
 .selectProfile {
