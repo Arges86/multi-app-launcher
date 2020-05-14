@@ -5,20 +5,22 @@
     </div>
     <div>
       <p>{{updateStatus}}</p>
-      <p><strong>Application Version:</strong> {{version}}</p>
-      <p><strong>Application Name:</strong> {{name}}</p>
-      <p><strong>App Resources:</strong></p>
-      <p class="ml-1"><strong>CPU Usage:</strong> {{cpuUsage.toFixed(3)}} %</p>
-      <p class="ml-1"><strong>Memory Usage:</strong> {{memUsage.toLocaleString('en')}} KB</p>
+      <div class="mt-1">
+        <p><strong>Application Version:</strong> {{version}}</p>
+        <p><strong>Application Name:</strong> {{name}}</p>
+        <p><strong>App Resources:</strong></p>
+        <p class="ml-1"><strong>CPU Usage:</strong> {{cpuUsage.toFixed(3)}} %</p>
+        <p class="ml-1"><strong>Memory Usage:</strong> {{memUsage.toLocaleString('en')}} KB</p>
+      </div>
     </div>
     <div class="mt-1" v-if="updateAvailable">
-      <button class="btn btn-primary" @click="openLatest">
-        <span class="icon icon-github-circled"></span>
+      <button class="btn btn-large btn-primary" @click="openLatest">
+        <span style="color: white;" class="icon icon-github-circled"></span> &nbsp;
         Download newest version
       </button>
       <div class="mt-1">
         <strong>Release Notes:</strong>
-        <p>{{releases[0].body}}</p>
+        <pre>{{releases[0].body}}</pre>
       </div>
     </div>
   </div>
@@ -57,11 +59,11 @@ export default {
       const latestVersion = data[0].tag_name
 
       // if the current app version is less than latest in github
-      if (semver.gt(latestVersion, this.version)) {
-        this.updateStatus = 'Newer version available.'
+      if (semver.gt(this.version, latestVersion)) {
+        this.updateStatus = 'Newer version available!'
         this.updateAvailable = true
       } else {
-        this.updateStatus = 'Application up to date!'
+        this.updateStatus = 'Application up to date.'
       }
     },
     openLatest () {
@@ -90,6 +92,7 @@ export default {
   height: 100%;
   top: 0px;
   width: 100%;
+  overflow-y: auto;
 }
 .ml-1 {
   margin-left: 1rem;
