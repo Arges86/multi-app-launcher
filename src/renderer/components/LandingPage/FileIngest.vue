@@ -40,7 +40,7 @@ export default {
       let filePath = await dialog.showOpenDialog(WIN, options)
 
       if (filePath.canceled) {
-        console.log('Operation was canceled')
+        // console.log('Operation was canceled')
       } else {
         const path = filePath.filePaths[0]
 

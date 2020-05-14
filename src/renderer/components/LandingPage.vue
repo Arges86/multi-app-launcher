@@ -66,6 +66,11 @@
                   </button>
                 </div>
               </div>
+              <div class="row" v-if="!program.url && whichTextBox != program.id" >
+                <div class="box-input" @drop.prevent="addFile($event, program.id)" @dragenter.prevent @dragover.prevent="dragOver" @dragleave="dragLeave">
+                 <div class="inner-box"> Drag and Drop</div>
+                </div>
+              </div>
               <div class="row" v-show="whichTextBox == program.id">
                 <form>
                   <div class="form-group mt-1">
@@ -223,6 +228,11 @@
         this.programs[objIndex].url = data.url
         this.getImage(data)
       },
+      addFile (event, id) {
+        if (event.dataTransfer.files[0]) {
+          this.addUrl({id: id, url: event.dataTransfer.files[0].path})
+        }
+      },
       submit () {
         this.programs.forEach(element => {
           if (element.url) {
@@ -297,6 +307,12 @@
         } catch (er) {
           console.error(er)
         }
+      },
+      dragOver (event) {
+        event.target.style['outline-offset'] = '-5px'
+      },
+      dragLeave (event) {
+        event.target.style['outline-offset'] = '-10px'
       }
     },
     watch: {
@@ -453,6 +469,7 @@ Vue.component('programIcon', {
   padding: 0px 5px 10px 5px;
   border-radius: 15px;
   overflow-wrap: break-word;
+  min-height: 116px;
 }
 
 .firstButton {
@@ -507,6 +524,18 @@ Vue.component('programIcon', {
 
 .mt-1 {
   margin-top: 1rem;
+}
+
+.box-input {
+  min-height: 55px;
+  outline: 2px dashed #92b0b3;
+  outline-offset: -10px;
+  transition: outline-offset .15s ease-in-out, background-color .15s linear;
+}
+.inner-box {
+  position: absolute;
+  top: 54%;
+  left: 34%;
 }
 
 .selectProfile {
