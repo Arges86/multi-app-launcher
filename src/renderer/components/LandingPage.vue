@@ -107,6 +107,7 @@
                   <img
                     @click="openSingle(program.url)"
                     v-if="program.icon"
+                    style="max-width: 36px;'"
                     class="pull-left"
                     :src="program.icon"
                     alt="Programs Icon"
@@ -218,15 +219,50 @@
         this.showModal()
       },
       addUrl (data) {
+        // if Windows shortcut
         if (data.url.endsWith('.lnk')) {
           try {
             data.url = shell.readShortcutLink(data.url).target
           } catch (error) {}
         }
+
+        // if Linux shortcut
+        if (data.url.endsWith('.desktop')) {
+          this.processLinux(data)
+        } else {
+          const objIndex = this.programs.findIndex(obj => obj.id === data.id)
+          this.programs[objIndex].url = data.url
+          this.getImage(data)
+        }
         this.whichTextBox = null
+      },
+      async processLinux (data) {
+        const fs = require('fs')
+        const ini = require('ini')
+        const util = require('util')
+        const exec = util.promisify(require('child_process').exec)
+        const text = ini.parse(fs.readFileSync(data.url, 'utf-8'))
+        console.log(text)
+        console.log(text['Desktop Entry'].Name, text['Desktop Entry'].Exec)
+        let icon = ''
+
+        try {
+          const {stdout} = await exec(`dpkg-query -L ${text['Desktop Entry'].Exec} | grep png`)
+          if (stdout) {
+            // gets first icon from list
+            icon = (stdout.split('\n'))[0]
+          }
+          console.log(icon)
+        } catch (error) {
+          console.log(error)
+        }
+
+        const iconBuffer = fs.readFileSync(icon)
+        const iconBase64 = Buffer.from(iconBuffer).toString('base64')
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
-        this.programs[objIndex].url = data.url
-        this.getImage(data)
+        // console.log('Base64 Image', iconBase64)
+        this.programs[objIndex].url = text['Desktop Entry'].Exec
+        this.programs[objIndex].icon = `data:image/png;base64,${iconBase64}`
       },
       addFile (event, id) {
         if (event.dataTransfer.files[0]) {
@@ -234,14 +270,24 @@
         }
       },
       submit () {
+        const exec = require('child_process').exec
         this.programs.forEach(element => {
           if (element.url) {
-            shell.openItem(element.url)
+            if (element.url.endsWith('exe')) {
+              shell.openItem(element.url)
+            } else {
+              exec(element.url)
+            }
           }
         })
       },
       openSingle (url) {
-        shell.openItem(url)
+        if (url.endsWith('exe')) {
+          shell.openItem(url)
+        } else {
+          const exec = require('child_process').exec
+          exec(url)
+        }
       },
       ClearProgram (id) {
         const objIndex = this.programs.findIndex(obj => obj.id === id)
