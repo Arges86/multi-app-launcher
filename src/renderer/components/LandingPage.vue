@@ -9,7 +9,8 @@
             @click="showDropdown = !showDropdown"
           >Profiles</button>
           <div class="dropdown-content" v-if="showDropdown">
-            <div class="content" v-for="profile in profiles" :key="profile">
+            <div v-if="profiles.length == 0">No Profiles saved</div>
+            <div v-else class="content" v-for="profile in profiles" :key="profile">
               <button
                 @click="loadProfile(profile)"
                 class="btn btn-mini btn-primary pull-left buttonPrimaryHover"
@@ -35,7 +36,7 @@
             <input
               type="range"
               min="1"
-              max="20"
+              max="40"
               value="5"
               class="slider"
               v-model="numbers"
@@ -136,6 +137,7 @@
   import Vue from 'vue'
   import path from 'path'
   import config from '../assets/config'
+  import parser from '../services/linuxparse'
   const { shell } = require('electron')
   const app = require('electron').remote.app
   const settings = require('electron').remote.require('electron-settings')
@@ -237,32 +239,10 @@
         this.whichTextBox = null
       },
       async processLinux (data) {
-        const fs = require('fs')
-        const ini = require('ini')
-        const util = require('util')
-        const exec = util.promisify(require('child_process').exec)
-        const text = ini.parse(fs.readFileSync(data.url, 'utf-8'))
-        console.log(text)
-        console.log(text['Desktop Entry'].Name, text['Desktop Entry'].Exec)
-        let icon = ''
-
-        try {
-          const {stdout} = await exec(`dpkg-query -L ${text['Desktop Entry'].Exec} | grep png`)
-          if (stdout) {
-            // gets first icon from list
-            icon = (stdout.split('\n'))[0]
-          }
-          console.log(icon)
-        } catch (error) {
-          console.log(error)
-        }
-
-        const iconBuffer = fs.readFileSync(icon)
-        const iconBase64 = Buffer.from(iconBuffer).toString('base64')
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
-        // console.log('Base64 Image', iconBase64)
-        this.programs[objIndex].url = text['Desktop Entry'].Exec
-        this.programs[objIndex].icon = `data:image/png;base64,${iconBase64}`
+        const parsed = await parser.parseDesktop(data.url)
+        this.programs[objIndex].url = parsed.url
+        this.programs[objIndex].icon = parsed.icon
       },
       addFile (event, id) {
         if (event.dataTransfer.files[0]) {
@@ -414,18 +394,25 @@ Vue.component('programIcon', {
     },
     methods: {
       getIcon (data) {
-        if (data.endsWith('.lnk')) {
-          try {
-            data = shell.readShortcutLink(data).target
-          } catch (error) {}
+        if (data.endsWith('.desktop')) {
+          parser.parseDesktop(data)
+            .then(response => {
+              this.icon = response.icon
+            })
+        } else {
+          if (data.endsWith('.lnk')) {
+            try {
+              data = shell.readShortcutLink(data).target
+            } catch (error) {}
+          }
+          app.getFileIcon(data)
+            .then(NativeImage => {
+              this.icon = NativeImage.toDataURL()
+            })
         }
-        app.getFileIcon(data)
-          .then(NativeImage => {
-            this.icon = NativeImage.toDataURL()
-          })
       }
     },
-    template: '<img style="background-image:none" :src="icon">'
+    template: '<img style="background-image:none; max-width: 36px;" :src="icon">'
 })
 </script>
 
@@ -631,12 +618,28 @@ img {
   padding: 0px 4px 5px 0px;
   border-radius: 15px;
 }
-img:hover,
-img:focus {
-  background-image: radial-gradient(
-    circle,
-    rgb(193, 193, 193),
-    rgba(146, 145, 145, 0)
-  );
+/*light theme*/
+@media screen and (prefers-color-scheme: light), screen and (prefers-color-scheme: no-preference) {
+  img:hover,
+  img:focus {
+    background-image: radial-gradient(
+      circle,
+      rgb(62, 155, 244),
+      rgba(146, 145, 145, 0)
+    );
+  }
 }
+
+/*dark theme*/
+@media screen and (prefers-color-scheme: dark) {
+  img:hover,
+  img:focus {
+    background-image: radial-gradient(
+      circle,
+      rgb(193, 193, 193),
+      rgba(146, 145, 145, 0)
+    );
+  }
+}
+
 </style>
