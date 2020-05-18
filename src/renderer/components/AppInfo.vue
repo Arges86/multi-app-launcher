@@ -93,6 +93,7 @@ export default {
   top: 0px;
   width: 100%;
   overflow-y: auto;
+  color: rgb(255, 255, 255);
 }
 .ml-1 {
   margin-left: 1rem;

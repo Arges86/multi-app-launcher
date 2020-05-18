@@ -9,7 +9,8 @@
             @click="showDropdown = !showDropdown"
           >Profiles</button>
           <div class="dropdown-content" v-if="showDropdown">
-            <div class="content" v-for="profile in profiles" :key="profile">
+            <div v-if="profiles.length == 0">No Profiles saved</div>
+            <div v-else class="content" v-for="profile in profiles" :key="profile">
               <button
                 @click="loadProfile(profile)"
                 class="btn btn-mini btn-primary pull-left buttonPrimaryHover"
@@ -35,7 +36,7 @@
             <input
               type="range"
               min="1"
-              max="20"
+              max="40"
               value="5"
               class="slider"
               v-model="numbers"
@@ -71,7 +72,7 @@
                   <div class="inner-box"> Drag and Drop</div>
                 </div>
               </div>
-              <div class="row" v-show="whichTextBox == program.id">
+              <div class="row" v-if="whichTextBox == program.id">
                 <form>
                   <div class="form-group mt-1">
                     <label for="pofileName">Search Program</label>
@@ -80,6 +81,7 @@
                       id="pofileName"
                       class="form-control"
                       placeholder="Outlook"
+                      v-focus
                       v-model="search"
                     />
                   </div>
@@ -107,6 +109,7 @@
                   <img
                     @click="openSingle(program.url)"
                     v-if="program.icon"
+                    style="max-width: 36px;'"
                     class="pull-left"
                     :src="program.icon"
                     alt="Programs Icon"
@@ -135,6 +138,7 @@
   import Vue from 'vue'
   import path from 'path'
   import config from '../assets/config'
+  import parser from '../services/linuxparse'
   const { shell } = require('electron')
   const app = require('electron').remote.app
   const settings = require('electron').remote.require('electron-settings')
@@ -218,15 +222,28 @@
         this.showModal()
       },
       addUrl (data) {
+        // if Windows shortcut
         if (data.url.endsWith('.lnk')) {
           try {
             data.url = shell.readShortcutLink(data.url).target
           } catch (error) {}
         }
+
+        // if Linux shortcut
+        if (data.url.endsWith('.desktop')) {
+          this.processLinux(data)
+        } else {
+          const objIndex = this.programs.findIndex(obj => obj.id === data.id)
+          this.programs[objIndex].url = data.url
+          this.getImage(data)
+        }
         this.whichTextBox = null
+      },
+      async processLinux (data) {
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
-        this.programs[objIndex].url = data.url
-        this.getImage(data)
+        const parsed = await parser.parseDesktop(data.url)
+        this.programs[objIndex].url = parsed.url
+        this.programs[objIndex].icon = parsed.icon
       },
       addFile (event, id) {
         if (event.dataTransfer.files[0]) {
@@ -234,14 +251,24 @@
         }
       },
       submit () {
+        const exec = require('child_process').exec
         this.programs.forEach(element => {
           if (element.url) {
-            shell.openItem(element.url)
+            if (element.url.endsWith('exe')) {
+              shell.openItem(element.url)
+            } else {
+              exec(element.url)
+            }
           }
         })
       },
       openSingle (url) {
-        shell.openItem(url)
+        if ((url.toLowerCase()).endsWith('exe')) {
+          shell.openItem(url)
+        } else {
+          const exec = require('child_process').exec
+          exec(url)
+        }
       },
       ClearProgram (id) {
         const objIndex = this.programs.findIndex(obj => obj.id === id)
@@ -344,6 +371,13 @@
           return data.name.toLowerCase().includes(this.search.toLowerCase())
         })
       }
+    },
+    directives: {
+      focus: {
+        inserted: function (el) {
+          el.focus()
+        }
+      }
     }
   }
 
@@ -368,18 +402,25 @@ Vue.component('programIcon', {
     },
     methods: {
       getIcon (data) {
-        if (data.endsWith('.lnk')) {
-          try {
-            data = shell.readShortcutLink(data).target
-          } catch (error) {}
+        if (data.endsWith('.desktop')) {
+          parser.parseDesktop(data)
+            .then(response => {
+              this.icon = response.icon
+            })
+        } else {
+          if (data.endsWith('.lnk')) {
+            try {
+              data = shell.readShortcutLink(data).target
+            } catch (error) {}
+          }
+          app.getFileIcon(data)
+            .then(NativeImage => {
+              this.icon = NativeImage.toDataURL()
+            })
         }
-        app.getFileIcon(data)
-          .then(NativeImage => {
-            this.icon = NativeImage.toDataURL()
-          })
       }
     },
-    template: '<img style="background-image:none" :src="icon">'
+    template: '<img style="background-image:none; max-width: 36px;" :src="icon">'
 })
 </script>
 
@@ -585,12 +626,28 @@ img {
   padding: 0px 4px 5px 0px;
   border-radius: 15px;
 }
-img:hover,
-img:focus {
-  background-image: radial-gradient(
-    circle,
-    rgb(193, 193, 193),
-    rgba(146, 145, 145, 0)
-  );
+/*light theme*/
+@media screen and (prefers-color-scheme: light), screen and (prefers-color-scheme: no-preference) {
+  img:hover,
+  img:focus {
+    background-image: radial-gradient(
+      circle,
+      rgb(62, 155, 244),
+      rgba(146, 145, 145, 0)
+    );
+  }
 }
+
+/*dark theme*/
+@media screen and (prefers-color-scheme: dark) {
+  img:hover,
+  img:focus {
+    background-image: radial-gradient(
+      circle,
+      rgb(193, 193, 193),
+      rgba(146, 145, 145, 0)
+    );
+  }
+}
+
 </style>
