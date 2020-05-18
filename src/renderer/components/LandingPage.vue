@@ -72,7 +72,7 @@
                   <div class="inner-box"> Drag and Drop</div>
                 </div>
               </div>
-              <div class="row" v-show="whichTextBox == program.id">
+              <div class="row" v-if="whichTextBox == program.id">
                 <form>
                   <div class="form-group mt-1">
                     <label for="pofileName">Search Program</label>
@@ -81,6 +81,7 @@
                       id="pofileName"
                       class="form-control"
                       placeholder="Outlook"
+                      v-focus
                       v-model="search"
                     />
                   </div>
@@ -262,7 +263,7 @@
         })
       },
       openSingle (url) {
-        if (url.endsWith('exe')) {
+        if ((url.toLowerCase()).endsWith('exe')) {
           shell.openItem(url)
         } else {
           const exec = require('child_process').exec
@@ -369,6 +370,13 @@
         return this.allPrograms.filter(data => {
           return data.name.toLowerCase().includes(this.search.toLowerCase())
         })
+      }
+    },
+    directives: {
+      focus: {
+        inserted: function (el) {
+          el.focus()
+        }
       }
     }
   }
