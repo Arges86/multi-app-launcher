@@ -54,16 +54,21 @@
                 <div class="user-select">Choose your program</div>
               </div>
               <div class="row">
-                <div class="btn-group" style="padding-left: 5%;">
+                <div class="btn-group" style="margin-left: 10px;">
                   <file-ingest @load="addUrl" :input="program"></file-ingest>
-                  <button class="btn btn-default buttonHover"  @click="showSearch(program.id)">
+                  <button class="btn btn-mini btn-default buttonHover" @click="showSearch(program.id)">
                     <span
                       class="icon"
                       :class="[whichTextBox == program.id ? 'icon-down-open-big' : 'icon-up-open-big']"
                     ></span>&nbsp; Search 
                   </button>
-                  <button class="btn btn-default buttonHover" @click="ClearProgram(program.id)">
+                  <button class="btn btn-mini btn-default buttonHover tooltip" @click="openOptions(program.id)" v-if="program.url">
+                    <span class="icon icon-cog"></span>
+                    <span class="tooltiptext">Add options to program</span>
+                  </button>
+                  <button class="btn btn-mini btn-default buttonHover tooltip" @click="ClearProgram(program.id)">
                     <span style="color: red;" class="icon icon-cancel"></span>Clear
+                    <span class="tooltiptext">Clear program from grid</span>
                   </button>
                 </div>
               </div>
@@ -107,7 +112,7 @@
                 <br />
                 <div class="col-md-2">
                   <img
-                    @click="openSingle(program.url)"
+                    @click="openSingle(program.url, program.options)"
                     v-if="program.icon"
                     style="max-width: 36px;'"
                     class="pull-left"
@@ -115,7 +120,7 @@
                     alt="Programs Icon"
                   />
                 </div>
-                <div class="col-md-10">{{program.url}}</div>
+                <div class="col-md-10">{{program.url}} &nbsp; {{program.options}}</div>
               </div>
             </div>
           </div>
@@ -126,7 +131,9 @@
         v-show="isModalVisible"
         :reset="isModalVisible"
         :oldName="oldName"
+        :optionsIndex="optionsIndex"
         @close="closeModal"
+        @addOptions="addOptions"
       />
     </div>
   </div>
@@ -142,6 +149,7 @@
   const { shell } = require('electron')
   const app = require('electron').remote.app
   const settings = require('electron').remote.require('electron-settings')
+  const exec = require('child_process').exec
   
   export default {
     name: 'landing-page',
@@ -157,30 +165,36 @@
       allPrograms: [], // array of applications found on default location
       search: '', // string to filter 'allPrograms' by
       searchId: 0, // which instnace of the 'programs' object is searching for an application
+      optionsIndex: null, // which program to add an options object to
       programs: [
         {
           id: 1,
           url: '',
+          options: '',
           icon: ''
         },
         {
           id: 2,
           url: '',
+          options: '',
           icon: ''
         },
         {
           id: 3,
           url: '',
+          options: '',
           icon: ''
         },
         {
           id: 4,
           url: '',
+          options: '',
           icon: ''
         },
         {
           id: 5,
           url: '',
+          options: '',
           icon: ''
         }
       ] // array of objects of programs, and their locations
@@ -197,10 +211,11 @@
             ([key, value]) => this.profiles.push(key)
           )
         }
+        console.log(this.allSettings)
       },
       loadProfile (profile) {
         this.showDropdown = false
-        this.programs = this.allSettings[profile]
+        this.programs = [...this.allSettings[profile]]
         this.numbers = this.programs.length
 
         this.programs.forEach(element => {
@@ -251,24 +266,21 @@
         }
       },
       submit () {
-        const exec = require('child_process').exec
         this.programs.forEach(element => {
           if (element.url) {
-            if (element.url.endsWith('exe')) {
-              shell.openItem(element.url)
-            } else {
-              exec(element.url)
-            }
+            this.openSingle(element.url, element.options)
           }
         })
       },
-      openSingle (url) {
-        if ((url.toLowerCase()).endsWith('exe')) {
-          shell.openItem(url)
-        } else {
-          const exec = require('child_process').exec
-          exec(url)
+      openSingle (url, options) {
+        if (process.platform === 'win32') {
+          url = `"${url}"`
         }
+        exec(`${url} ${options}`, (err) => {
+          if (err) {
+            console.error(`exec error: ${err}`)
+          }
+        })
       },
       ClearProgram (id) {
         const objIndex = this.programs.findIndex(obj => obj.id === id)
@@ -280,8 +292,10 @@
       showModal () {
         this.isModalVisible = true
         this.showDropdown = false
+        this.optionsIndex = null
       },
       closeModal (data) {
+        console.log(data)
         this.isModalVisible = false
         this.oldName = null
         if (data) {
@@ -298,6 +312,20 @@
             this.getProfiles()
           }
         }
+      },
+      addOptions (data) {
+        console.log('Add Options: ', data)
+        this.isModalVisible = false
+        if (data) {
+          const objIndex = this.programs.findIndex(obj => obj.id === data.id)
+          this.programs[objIndex].options = data.text
+          this.programs.push([])
+          this.programs.pop()
+        }
+      },
+      openOptions (id) {
+        this.optionsIndex = id
+        this.isModalVisible = true
       },
       showSearch (data) {
         this.search = null
@@ -352,7 +380,8 @@
           for (let index = 0; index < diff; index++) {
             this.programs.push({
               id: initial + (index + 1),
-              url: ''
+              url: '',
+              options: ''
             })
           }
         }
@@ -435,10 +464,12 @@ Vue.component('programIcon', {
       format("woff2");
 }
 
-/* Scorllbar */
+/* Scrollbar */
 .scrollable {
   overflow-y: auto;
+  overflow-x: hidden;
   height: 75vh;
+  display: list-item; /* this seems to allow the tooltip to not get cliped on the top row */
 }
 .scrollable::-webkit-scrollbar-track {
   background-color: #F5F5F5;

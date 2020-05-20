@@ -94,6 +94,7 @@ export default {
 <style>
 @import '~@/assets/photon/css/photon.min.css';
 @import '~@/assets/css/bootstrap.css';
+@import '~@/assets/css/tooltip.css';
 
 .toolbar {
   -webkit-app-region: drag;

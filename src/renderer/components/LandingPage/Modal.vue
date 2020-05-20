@@ -7,20 +7,42 @@
         aria-labelledby="modalTitle"
         aria-describedby="modalDescription"
       >
-        <header class="modal-header" id="modalTitle">
-          <span v-if="oldName">Rename {{oldName}} to:</span>
-          <span v-else>Save Profile As:</span>
-          <span @click="close" class="icon icon-cancel"></span>
-        </header>
-        <section class="modal-body" id="modalDescription">
-          <form>
-            <div class="form-group">
-              <label for="pofileName">Pofile Name</label>
-              <input type="text" id="pofileName" class="form-control" placeholder="Profile1" v-model="name" @keyup.enter="save"/>
-            </div>
-          </form>
-          <button class="btn btn-primary pull-right" :disabled="!name" @click="save">Save</button>
-        </section>
+        <!-- For Options dialog -->
+        <span v-if="optionsIndex">
+            <header class="modal-header" id="modalTitle">
+              Add options arguments &nbsp;
+              <span @click="close" class="icon icon-cancel"></span>
+          </header>
+           <section class="modal-body" id="modalDescription">
+             <form>
+               <div class="form-group">
+                 {{optionsIndex}}
+                 <label for="options">Options</label>
+                 <input type="text" class="form-control" placeholder="-private-window" v-model="optionsText" @keyup.enter="addOptions">
+                 <button class="btn btn-primary pull-right" :disabled="!optionsText" @click="addOptions">Add</button>
+               </div>
+             </form>
+          </section>
+        </span>
+
+        <!-- For profile dialog -->
+        <span v-else>
+          <header class="modal-header" id="modalTitle">
+            <span v-if="oldName">Rename {{oldName}} to:</span>
+            <span v-else>Save Profile As:</span>
+            <span @click="close" class="icon icon-cancel"></span>
+          </header>
+          <section class="modal-body" id="modalDescription">
+            <form>
+              <div class="form-group">
+                <label for="pofileName">Pofile Name</label>
+                <input type="text" id="pofileName" class="form-control" placeholder="Profile1" v-model="name" @keyup.enter="save"/>
+              </div>
+            </form>
+            <button class="btn btn-primary pull-right" :disabled="!name" @click="save">Save</button>
+          </section>
+        </span>
+
       </div>
     </div>
   </transition>
@@ -32,14 +54,17 @@ export default {
   name: 'modal',
   props: {
     oldName: '', // If renaming profile, this is the existing name
-    reset: false // boolean value to nullify form so its blank
+    reset: false, // boolean value to nullify form so its blank
+    optionsIndex: '' // which program to add an options object to
   },
   data: () => ({
-    name: '' // user inputed name
+    name: '', // user inputed name
+    optionsText: '' // user inputed options arguments
   }),
   watch: {
     reset: function (data) {
       this.name = null
+      this.optionsText = null
     }
   },
   methods: {
@@ -49,6 +74,11 @@ export default {
     save () {
       if (this.name) {
         this.$emit('close', {new: this.name, old: this.oldName})
+      }
+    },
+    addOptions () {
+      if (this.optionsText) {
+        this.$emit('addOptions', {id: this.optionsIndex, text: this.optionsText})
       }
     }
   }
@@ -102,7 +132,7 @@ export default {
 
 .modal-body {
   position: relative;
-  padding: 20px 10px;
+  padding: 20px 10px 40px 10px;
 }
 label, input {
   color: rgb(0, 0, 0);
