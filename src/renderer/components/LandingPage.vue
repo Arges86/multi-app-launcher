@@ -211,7 +211,6 @@
             ([key, value]) => this.profiles.push(key)
           )
         }
-        console.log(this.allSettings)
       },
       loadProfile (profile) {
         this.showDropdown = false

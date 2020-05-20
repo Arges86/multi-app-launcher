@@ -9,19 +9,31 @@
       >
         <!-- For Options dialog -->
         <span v-if="optionsIndex">
-            <header class="modal-header" id="modalTitle">
-              Add options arguments &nbsp;
-              <span @click="close" class="icon icon-cancel"></span>
+          <header class="modal-header" id="modalTitle">
+            Add options arguments &nbsp;
+            <span @click="close" class="icon icon-cancel"></span>
           </header>
-           <section class="modal-body" id="modalDescription">
-             <form>
-               <div class="form-group">
-                 {{optionsIndex}}
-                 <label for="options">Options</label>
-                 <input type="text" class="form-control" placeholder="-private-window" v-model="optionsText" @keyup.enter="addOptions">
-                 <button class="btn btn-primary pull-right" :disabled="!optionsText" @click="addOptions">Add</button>
-               </div>
-             </form>
+          <section class="modal-body" id="modalDescription">
+            <form>
+              <div class="form-group">
+                <label for="options">Options</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="options"
+                  ref="options"
+                  placeholder="-private-window"
+                  v-model="optionsText"
+                  @keyup.enter="addOptions"
+                  v-focus
+                />
+              </div>
+            </form>
+            <button
+              class="btn btn-primary pull-right"
+              :disabled="!optionsText"
+              @click="addOptions"
+            >Add</button>
           </section>
         </span>
 
@@ -32,17 +44,29 @@
             <span v-else>Save Profile As:</span>
             <span @click="close" class="icon icon-cancel"></span>
           </header>
-          <section class="modal-body" id="modalDescription">
+          <section class="modal-body" id="modalDescription" v-if="reset">
             <form>
               <div class="form-group">
                 <label for="pofileName">Pofile Name</label>
-                <input type="text" id="pofileName" class="form-control" placeholder="Profile1" v-model="name" @keyup.enter="save"/>
+                <input
+                  type="text"
+                  id="pofileName"
+                  class="form-control"
+                  ref="pofileName"
+                  placeholder="Profile1"
+                  v-model="name"
+                  @keyup.enter="save"
+                  v-focus
+                />
               </div>
             </form>
-            <button class="btn btn-primary pull-right" :disabled="!name" @click="save">Save</button>
+            <button
+              class="btn btn-primary pull-right" 
+              :disabled="!name" 
+              @click="save"
+              >Save</button>
           </section>
         </span>
-
       </div>
     </div>
   </transition>
@@ -79,6 +103,13 @@ export default {
     addOptions () {
       if (this.optionsText) {
         this.$emit('addOptions', {id: this.optionsIndex, text: this.optionsText})
+      }
+    }
+  },
+  directives: {
+    focus: {
+      inserted: function (el) {
+        el.focus()
       }
     }
   }
@@ -122,19 +153,22 @@ export default {
   justify-content: flex-end;
 }
 
-.modal-fade-enter, .modal-fade-leave-active {
+.modal-fade-enter,
+.modal-fade-leave-active {
   opacity: 0;
 }
 
-.modal-fade-enter-active, .modal-fade-leave-active {
-  transition: opacity .5s ease
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.5s ease;
 }
 
 .modal-body {
   position: relative;
   padding: 20px 10px 40px 10px;
 }
-label, input {
+label,
+input {
   color: rgb(0, 0, 0);
 }
 </style>
