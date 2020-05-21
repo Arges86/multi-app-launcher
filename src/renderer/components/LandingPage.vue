@@ -33,14 +33,7 @@
         <div class="row">
           How many programs: {{numbers}}
           <div class="slidecontainer">
-            <input
-              type="range"
-              min="1"
-              max="40"
-              value="5"
-              class="slider"
-              v-model="numbers"
-            />
+            <input type="range" min="1" max="40" value="5" class="slider" v-model="numbers" />
           </div>
         </div>
         <div class="row">
@@ -54,22 +47,43 @@
                 <div class="user-select">Choose your program</div>
               </div>
               <div class="row">
-                <div class="btn-group" style="padding-left: 5%;">
+                <div class="btn-group" style="margin-left: 10px;">
                   <file-ingest @load="addUrl" :input="program"></file-ingest>
-                  <button class="btn btn-default buttonHover"  @click="showSearch(program.id)">
+                  <button
+                    class="btn btn-mini btn-default buttonHover"
+                    @click="showSearch(program.id)"
+                  >
                     <span
                       class="icon"
-                      :class="[whichTextBox == program.id ? 'icon-down-open-big' : 'icon-up-open-big']"
-                    ></span>&nbsp; Search 
+                      :class="[whichTextBox == program.id ? 'icon-up-open-big' : 'icon-down-open-big']"
+                    ></span>&nbsp; Search
                   </button>
-                  <button class="btn btn-default buttonHover" @click="ClearProgram(program.id)">
+                  <button
+                    class="btn btn-mini btn-default buttonHover tooltip"
+                    @click="openOptions(program.id)"
+                    v-if="program.url"
+                  >
+                    <span class="icon icon-cog"></span>
+                    <span class="tooltiptext">Add options to program</span>
+                  </button>
+                  <button
+                    class="btn btn-mini btn-default buttonHover tooltip"
+                    @click="ClearProgram(program.id)"
+                  >
                     <span style="color: red;" class="icon icon-cancel"></span>Clear
+                    <span class="tooltiptext">Clear program from grid</span>
                   </button>
                 </div>
               </div>
-              <div class="row" v-if="!program.url && whichTextBox != program.id" >
-                <div class="box-input" @drop.prevent="addFile($event, program.id)" @dragenter.prevent @dragover.prevent="dragOver" @dragleave="dragLeave">
-                  <div class="inner-box"> Drag and Drop</div>
+              <div class="row" v-if="!program.url && whichTextBox != program.id">
+                <div
+                  class="box-input"
+                  @drop.prevent="addFile($event, program.id)"
+                  @dragenter.prevent
+                  @dragover.prevent="dragOver"
+                  @dragleave="dragLeave"
+                >
+                  <div class="inner-box">Drag and Drop</div>
                 </div>
               </div>
               <div class="row" v-if="whichTextBox == program.id">
@@ -107,7 +121,7 @@
                 <br />
                 <div class="col-md-2">
                   <img
-                    @click="openSingle(program.url)"
+                    @click="openSingle(program.url, program.options)"
                     v-if="program.icon"
                     style="max-width: 36px;'"
                     class="pull-left"
@@ -115,7 +129,7 @@
                     alt="Programs Icon"
                   />
                 </div>
-                <div class="col-md-10">{{program.url}}</div>
+                <div class="col-md-10">{{program.url}} &nbsp; {{program.options}}</div>
               </div>
             </div>
           </div>
@@ -126,7 +140,9 @@
         v-show="isModalVisible"
         :reset="isModalVisible"
         :oldName="oldName"
+        :optionsIndex="optionsIndex"
         @close="closeModal"
+        @addOptions="addOptions"
       />
     </div>
   </div>
@@ -142,6 +158,7 @@
   const { shell } = require('electron')
   const app = require('electron').remote.app
   const settings = require('electron').remote.require('electron-settings')
+  const exec = require('child_process').exec
   
   export default {
     name: 'landing-page',
@@ -157,30 +174,36 @@
       allPrograms: [], // array of applications found on default location
       search: '', // string to filter 'allPrograms' by
       searchId: 0, // which instnace of the 'programs' object is searching for an application
+      optionsIndex: null, // which program to add an options object to
       programs: [
         {
           id: 1,
           url: '',
+          options: '',
           icon: ''
         },
         {
           id: 2,
           url: '',
+          options: '',
           icon: ''
         },
         {
           id: 3,
           url: '',
+          options: '',
           icon: ''
         },
         {
           id: 4,
           url: '',
+          options: '',
           icon: ''
         },
         {
           id: 5,
           url: '',
+          options: '',
           icon: ''
         }
       ] // array of objects of programs, and their locations
@@ -200,7 +223,7 @@
       },
       loadProfile (profile) {
         this.showDropdown = false
-        this.programs = this.allSettings[profile]
+        this.programs = [...this.allSettings[profile]]
         this.numbers = this.programs.length
 
         this.programs.forEach(element => {
@@ -251,24 +274,26 @@
         }
       },
       submit () {
-        const exec = require('child_process').exec
         this.programs.forEach(element => {
           if (element.url) {
-            if (element.url.endsWith('exe')) {
-              shell.openItem(element.url)
-            } else {
-              exec(element.url)
-            }
+            this.openSingle(element.url, element.options)
           }
         })
       },
-      openSingle (url) {
-        if ((url.toLowerCase()).endsWith('exe')) {
-          shell.openItem(url)
-        } else {
-          const exec = require('child_process').exec
-          exec(url)
+      openSingle (url, options) {
+        // if windows, surround in double quotes
+        if (process.platform === 'win32') {
+          url = `"${url}"`
         }
+        // if options exists, append to program
+        if (options !== undefined) {
+          url = `${url} ${options}`
+        }
+        exec(url, (err, stdout, stderr) => {
+          if (err) {
+            console.error(`exec error: ${err}`)
+          }
+        })
       },
       ClearProgram (id) {
         const objIndex = this.programs.findIndex(obj => obj.id === id)
@@ -280,8 +305,10 @@
       showModal () {
         this.isModalVisible = true
         this.showDropdown = false
+        this.optionsIndex = null
       },
       closeModal (data) {
+        console.log(data)
         this.isModalVisible = false
         this.oldName = null
         if (data) {
@@ -298,6 +325,20 @@
             this.getProfiles()
           }
         }
+      },
+      addOptions (data) {
+        console.log('Add Options: ', data)
+        this.isModalVisible = false
+        if (data) {
+          const objIndex = this.programs.findIndex(obj => obj.id === data.id)
+          this.programs[objIndex].options = data.text
+          this.programs.push([])
+          this.programs.pop()
+        }
+      },
+      openOptions (id) {
+        this.optionsIndex = id
+        this.isModalVisible = true
       },
       showSearch (data) {
         this.search = null
@@ -352,7 +393,8 @@
           for (let index = 0; index < diff; index++) {
             this.programs.push({
               id: initial + (index + 1),
-              url: ''
+              url: '',
+              options: ''
             })
           }
         }
@@ -435,30 +477,34 @@ Vue.component('programIcon', {
       format("woff2");
 }
 
-/* Scorllbar */
+/* Scrollbar */
 .scrollable {
   overflow-y: auto;
+  overflow-x: hidden;
   height: 75vh;
+  display: list-item; /* this seems to allow the tooltip to not get cliped on the top row */
 }
 .scrollable::-webkit-scrollbar-track {
-  background-color: #F5F5F5;
+  background-color: rgb(245, 245, 245);
   border-radius: 10px;
 }
 .scrollable::-webkit-scrollbar {
   width: 10px;
-  background-color: #F5F5F5;
+  background-color: rgb(245, 245, 245);
 }
 .scrollable::-webkit-scrollbar-thumb {
-  background-color: #3366FF;
+  background-color: rgb(51, 102, 255);
   border-radius: 10px;
-  background-image: -webkit-linear-gradient(0deg,
+  background-image: -webkit-linear-gradient(
+    0deg,
     rgba(255, 255, 255, 0.5) 25%,
     transparent 25%,
     transparent 50%,
     rgba(255, 255, 255, 0.5) 50%,
     rgba(255, 255, 255, 0.5) 75%,
     transparent 75%,
-    transparent)
+    transparent
+  );
 }
 
 .inputForm {
@@ -480,7 +526,7 @@ Vue.component('programIcon', {
   width: 100%;
   height: 15px;
   border-radius: 5px;
-  background: #d3d3d3;
+  background: rgb(211, 211, 211);
   outline: none;
   opacity: 0.7;
   -webkit-transition: 0.2s;
@@ -496,12 +542,12 @@ Vue.component('programIcon', {
   -webkit-appearance: none;
   appearance: none;
   display: block;
-  background: black;
+  background: rgb(0, 0, 0);
   border-radius: 100%;
   width: 25px;
   height: 25px;
   margin: 0;
-  background: radial-gradient(circle at 10px 10px, #5cabff, #000);
+  background: radial-gradient(circle at 10px 10px, rgb(92, 171, 255), rgb(0, 0, 0));
   cursor: pointer;
 }
 
@@ -530,7 +576,7 @@ Vue.component('programIcon', {
   position: absolute;
   top: -8px;
   left: 42px;
-  background-color: #f9f9f9;
+  background-color: rgb(249, 249, 249);
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   padding: 12px 16px;
@@ -542,7 +588,7 @@ Vue.component('programIcon', {
   position: absolute;
   top: 3.3rem;
   left: 3.7rem;
-  background-color: #f9f9f9;
+  background-color: rgb(249, 249, 249);
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   padding: 12px 7px 0px;
@@ -569,9 +615,9 @@ Vue.component('programIcon', {
 
 .box-input {
   min-height: 55px;
-  outline: 2px dashed #92b0b3;
+  outline: 2px dashed rgb(146, 176, 179);
   outline-offset: -10px;
-  transition: outline-offset .15s ease-in-out, background-color .15s linear;
+  transition: outline-offset 0.15s ease-in-out, background-color 0.15s linear;
   z-index: 2;
 }
 .inner-box {
@@ -595,7 +641,7 @@ Vue.component('programIcon', {
 
 .deleteProfile {
   margin-left: 2rem;
-  color: red;
+  color: rgb(255, 0, 0);
   padding: 0.1rem 1rem;
   border-radius: 25px;
   cursor: pointer;
@@ -627,7 +673,8 @@ img {
   border-radius: 15px;
 }
 /*light theme*/
-@media screen and (prefers-color-scheme: light), screen and (prefers-color-scheme: no-preference) {
+@media screen and (prefers-color-scheme: light),
+  screen and (prefers-color-scheme: no-preference) {
   img:hover,
   img:focus {
     background-image: radial-gradient(
@@ -649,5 +696,4 @@ img {
     );
   }
 }
-
 </style>
