@@ -6,12 +6,13 @@
         role="dialog"
         aria-labelledby="modalTitle"
         aria-describedby="modalDescription"
+        style="position: relative;"
       >
         <!-- For Options dialog -->
         <span v-if="optionsIndex">
           <header class="modal-header" id="modalTitle">
             Add options arguments &nbsp;
-            <span @click="close" class="icon icon-cancel"></span>
+            <span @click="close" class="icon icon-cancel close-button"></span>
           </header>
           <section class="modal-body" id="modalDescription">
             <form>
@@ -42,7 +43,7 @@
           <header class="modal-header" id="modalTitle">
             <span v-if="oldName">Rename {{oldName}} to:</span>
             <span v-else>Save Profile As:</span>
-            <span @click="close" class="icon icon-cancel"></span>
+            <span @click="close" class="icon icon-cancel close-button"></span>
           </header>
           <section class="modal-body" id="modalDescription" v-if="reset">
             <form>
@@ -140,6 +141,18 @@ export default {
 .modal-footer {
   padding: 15px;
   display: flex;
+}
+
+.close-button {
+  padding: 9px 16px;
+  position: absolute;
+  right: 0rem;
+  top: 0rem;
+}
+.close-button:hover {
+  color: rgb(255, 0, 0);
+  background-color: rgba(211, 211, 211, 0.65);
+  border-radius: 11px 0px 11px 15px;
 }
 
 .modal-header {
