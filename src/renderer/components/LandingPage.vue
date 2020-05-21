@@ -560,15 +560,15 @@ Vue.component('programIcon', {
 }
 
 .firstButton {
-  top: 1.9rem;
-  left: 0.2rem;
+  top: 0.3rem;
+  left: 2.2rem;
   position: absolute;
 }
 
 .secondButton {
   position: absolute;
-  top: 1.9rem;
-  left: 3.7rem;
+  top: 0.3rem;
+  left: 5.6rem;
 }
 
 .dropdown-content-hide {
@@ -586,8 +586,8 @@ Vue.component('programIcon', {
 .dropdown-content {
   display: block;
   position: absolute;
-  top: 3.3rem;
-  left: 3.7rem;
+  top: 1.8rem;
+  left: 5.6rem;
   background-color: rgb(249, 249, 249);
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
@@ -622,7 +622,7 @@ Vue.component('programIcon', {
 }
 .inner-box {
   position: absolute;
-  top: 54%;
+  top: 52%;
   left: 34%;
   z-index: -1;
 }
