@@ -139,12 +139,12 @@ export default {
 
 .modal-header,
 .modal-footer {
-  padding: 15px;
+  padding: 8px 0px 2px;
   display: flex;
 }
 
 .close-button {
-  padding: 9px 16px;
+  padding: 5px 12px;
   position: absolute;
   right: 0rem;
   top: 0rem;
@@ -152,13 +152,18 @@ export default {
 .close-button:hover {
   color: rgb(255, 0, 0);
   background-color: rgba(211, 211, 211, 0.65);
-  border-radius: 11px 0px 11px 15px;
 }
 
 .modal-header {
   border-bottom: 1px solid rgb(238, 238, 238);
   color: #4aae9b;
   justify-content: space-between;
+}
+
+#modalTitle {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
 }
 
 .modal-footer {

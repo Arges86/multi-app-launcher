@@ -7,7 +7,7 @@ export default {
     const util = require('util')
     const exec = util.promisify(require('child_process').exec)
     const text = ini.parse(fs.readFileSync(data, 'utf-8'))
-    const command = (text['Desktop Entry'].Exec).replace(/ %u| %f/, '')
+    const command = (text['Desktop Entry'].Exec).toLowerCase().replace(/ %u| %f/, '')
     // console.log(text['Desktop Entry'].Name, command)
     let icon = ''
 

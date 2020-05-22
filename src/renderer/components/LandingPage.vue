@@ -2,18 +2,21 @@
   <div>
     <div class="container-fluid" id="wrapper">
       <div class="row">
-        <button class="btn btn-default pull-left firstButton buttonHover" @click="showModal">Save As</button>
+        <div class="btn-group pull-left firstButton">
+          <button class="btn btn-default buttonHover" @click="showModal">Save As</button>
+            <button
+              class="btn btn-default btn-dropdown buttonHover"
+              @click="showDropdown = !showDropdown"
+            >Profiles</button>
+          <button class="btn btn-default buttonHover" @click="clearAll">Reset</button>
+        </div>
         <div class="dropdown">
-          <button
-            class="btn btn-default btn-dropdown secondButton buttonHover"
-            @click="showDropdown = !showDropdown"
-          >Profiles</button>
           <div class="dropdown-content" v-if="showDropdown">
             <div v-if="profiles.length == 0">No Profiles saved</div>
             <div v-else class="content" v-for="profile in profiles" :key="profile">
               <button
                 @click="loadProfile(profile)"
-                class="btn btn-mini btn-primary pull-left buttonPrimaryHover"
+                class="btn btn-mini btn-primary buttonPrimaryHover"
               >{{profile}}</button>
               <button
                 class="btn btn-mini btn-default rename buttonHover"
@@ -129,7 +132,7 @@
                     alt="Programs Icon"
                   />
                 </div>
-                <div class="col-md-10">{{program.url}} &nbsp; {{program.options}}</div>
+                <div class="col-md-10" :id="program.url" :ref="program.url">{{program.url}} &nbsp; {{program.options}}</div>
               </div>
             </div>
           </div>
@@ -159,15 +162,25 @@
   const app = require('electron').remote.app
   const settings = require('electron').remote.require('electron-settings')
   const exec = require('child_process').exec
-  
+  const number = 5 // cheating with global number so it can be reused
+
+  class Program {
+    constructor (id, url, options, icon) {
+      this.id = id
+      this.url = url || ''
+      this.options = options || ''
+      this.icon = icon || ''
+    }
+  }
+
   export default {
     name: 'landing-page',
     components: { FileIngest, Modal },
     data: () => ({
       isModalVisible: false, // toggles visibility of the Save As modal
-      whichTextBox: null,
+      whichTextBox: null, // Program.id to render text box for search input
       profiles: [], // array of user profiles
-      numbers: 5, // default number of program boxes
+      numbers: number, // default number of program boxes
       showDropdown: false, // toggles the profile picker dropdown
       allSettings: {}, // object of all user settings
       oldName: null, // old profile name when renaming profile
@@ -175,38 +188,7 @@
       search: '', // string to filter 'allPrograms' by
       searchId: 0, // which instnace of the 'programs' object is searching for an application
       optionsIndex: null, // which program to add an options object to
-      programs: [
-        {
-          id: 1,
-          url: '',
-          options: '',
-          icon: ''
-        },
-        {
-          id: 2,
-          url: '',
-          options: '',
-          icon: ''
-        },
-        {
-          id: 3,
-          url: '',
-          options: '',
-          icon: ''
-        },
-        {
-          id: 4,
-          url: '',
-          options: '',
-          icon: ''
-        },
-        {
-          id: 5,
-          url: '',
-          options: '',
-          icon: ''
-        }
-      ] // array of objects of programs, and their locations
+      programs: Array(number).fill(null).map((_, i) => new Program(i + 1)) // array Program
     }),
     mounted () {
       this.getProfiles()
@@ -231,8 +213,6 @@
             this.getImage(element)
           }
         })
-        this.programs.push([])
-        this.programs.pop()
       },
       deleteProfile (profile) {
         settings.delete(profile)
@@ -243,6 +223,10 @@
       renameProfile (profile) {
         this.oldName = profile
         this.showModal()
+      },
+      clearAll () {
+        this.numbers = number
+        this.programs = Array(number).fill(null).map((_, i) => new Program(i + 1))
       },
       addUrl (data) {
         // if Windows shortcut
@@ -265,8 +249,10 @@
       async processLinux (data) {
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
         const parsed = await parser.parseDesktop(data.url)
-        this.programs[objIndex].url = parsed.url
-        this.programs[objIndex].icon = parsed.icon
+        const temp = this.programs[objIndex]
+        temp.url = parsed.url
+        temp.icon = parsed.icon
+        this.programs.splice(objIndex, 1, temp)
       },
       addFile (event, id) {
         if (event.dataTransfer.files[0]) {
@@ -291,16 +277,23 @@
         }
         exec(url, (err, stdout, stderr) => {
           if (err) {
+            // manually add error to DOM;
+            // Don't want to polute the Program class
             console.error(`exec error: ${err}`)
+            const program = url.trim()
+            const para = document.createElement('p')
+            const node = document.createTextNode(err)
+            para.appendChild(node)
+            para.setAttribute('class', 'error')
+            this.$refs[program][0].appendChild(para)
           }
         })
       },
       ClearProgram (id) {
-        const objIndex = this.programs.findIndex(obj => obj.id === id)
-        this.programs[objIndex].url = ''
         this.search = null
-        this.programs.push([])
-        this.programs.pop()
+        const objIndex = this.programs.findIndex(obj => obj.id === id)
+        const temp = new Program(this.programs[objIndex].id)
+        this.programs.splice(objIndex, 1, temp)
       },
       showModal () {
         this.isModalVisible = true
@@ -327,13 +320,12 @@
         }
       },
       addOptions (data) {
-        console.log('Add Options: ', data)
         this.isModalVisible = false
         if (data) {
           const objIndex = this.programs.findIndex(obj => obj.id === data.id)
-          this.programs[objIndex].options = data.text
-          this.programs.push([])
-          this.programs.pop()
+          const temp = this.programs[objIndex]
+          temp.options = data.text
+          this.programs.splice(objIndex, 1, temp)
         }
       },
       openOptions (id) {
@@ -360,9 +352,9 @@
           icon = config.defaultIcon
         }
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
-        this.programs[objIndex].icon = icon
-        this.programs.push([])
-        this.programs.pop()
+        const temp = this.programs[objIndex]
+        temp.icon = icon
+        this.programs.splice(objIndex, 1, temp)
       },
       getList () {
         const klawSync = require('klaw-sync')
@@ -391,11 +383,7 @@
         // if adding to array
         if (diff > 0) {
           for (let index = 0; index < diff; index++) {
-            this.programs.push({
-              id: initial + (index + 1),
-              url: '',
-              options: ''
-            })
+            this.programs.push(new Program(initial + (index + 1)))
           }
         }
 
@@ -564,11 +552,15 @@ Vue.component('programIcon', {
   left: 2.2rem;
   position: absolute;
 }
-
 .secondButton {
   position: absolute;
   top: 0.3rem;
   left: 5.6rem;
+}
+.thirdButton{
+  position: absolute;
+  top: 0.3rem;
+  left: 9.7rem;
 }
 
 .dropdown-content-hide {
@@ -639,6 +631,12 @@ Vue.component('programIcon', {
   margin-right: -8px;
 }
 
+.error {
+  color: rgb(255, 0, 0);
+  margin-top: 0.2rem;
+  font-style: italic;
+}
+
 .deleteProfile {
   margin-left: 2rem;
   color: rgb(255, 0, 0);
@@ -653,7 +651,7 @@ Vue.component('programIcon', {
 .content:hover,
 .content:focus {
   background-color: rgb(228, 228, 228);
-  text-decoration: underline;
+  /* text-decoration: underline; */
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
 }
 
