@@ -9,9 +9,9 @@
         </div>
         <div class="col-md-4">
           <span class="title">
-            <strong>M</strong>ulti
-            <strong>A</strong>pp
-            <strong>L</strong>auncher
+            <strong>M</strong>ulti &nbsp;
+            <strong>A</strong>pp &nbsp;
+            <strong>L</strong>auncher 
           </span>
         </div>
         <div class="col-md-4">
