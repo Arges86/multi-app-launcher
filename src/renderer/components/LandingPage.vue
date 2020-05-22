@@ -132,7 +132,7 @@
                     alt="Programs Icon"
                   />
                 </div>
-                <div class="col-md-10">{{program.url}} &nbsp; {{program.options}}</div>
+                <div class="col-md-10" :id="program.url" :ref="program.url">{{program.url}} &nbsp; {{program.options}}</div>
               </div>
             </div>
           </div>
@@ -249,8 +249,10 @@
       async processLinux (data) {
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
         const parsed = await parser.parseDesktop(data.url)
-        this.programs[objIndex].url = parsed.url
-        this.programs[objIndex].icon = parsed.icon
+        const temp = this.programs[objIndex]
+        temp.url = parsed.url
+        temp.icon = parsed.icon
+        this.programs.splice(objIndex, 1, temp)
       },
       addFile (event, id) {
         if (event.dataTransfer.files[0]) {
@@ -275,7 +277,15 @@
         }
         exec(url, (err, stdout, stderr) => {
           if (err) {
+            // manually add error to DOM;
+            // Don't want to polute the Program class
             console.error(`exec error: ${err}`)
+            const program = url.trim()
+            const para = document.createElement('p')
+            const node = document.createTextNode(err)
+            para.appendChild(node)
+            para.setAttribute('class', 'error')
+            this.$refs[program][0].appendChild(para)
           }
         })
       },
@@ -619,6 +629,12 @@ Vue.component('programIcon', {
 .rename {
   margin-left: 15px;
   margin-right: -8px;
+}
+
+.error {
+  color: rgb(255, 0, 0);
+  margin-top: 0.2rem;
+  font-style: italic;
 }
 
 .deleteProfile {
