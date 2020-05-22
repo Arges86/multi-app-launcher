@@ -30,6 +30,13 @@ Once you have all the programs you like, simple save your profile.
 You can have as many profiles as you like.  
 ![Profile](screenshots/profiles.png)
 
+Lastly, can you add optional arguments to the startup command.  
+For instance, to start Chrome in 'Incognito', click the gear icon and type `--incognito`  
+into the options modal.  
+Many programs have startup options that can be set. Two examples are:   
+Firefox's list can be found [here](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options).  
+Chrome's list can be found [here](https://peter.sh/experiments/chromium-command-line-switches/).  
+
 ### Updates
 The program checks for any updates at launch.   
 If there are any updates available, a notification will appear on the icon in the top left.   
