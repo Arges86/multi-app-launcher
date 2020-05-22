@@ -1,12 +1,13 @@
 <template>
   <!-- <div> -->
-    <button class="btn btn-default buttonHover" type="file" accept=".exe" @click="openfile">
+    <button class="btn btn-mini btn-default buttonHover" type="file" accept=".exe" @click="openfile">
      Pick File <span style="color: green;" class="icon icon-cog"></span>
     </button>
   <!-- </div> -->
 </template>
 
 <script>
+import config from '../../assets/config'
 const {remote} = require('electron')
 
 export default {
@@ -27,14 +28,28 @@ export default {
       const dialog = remote.dialog
       const WIN = remote.getCurrentWindow()
 
-      const options = {
-        title: 'Find a Program',
-        buttonLabel: 'Pick file',
-        filters: [
-          {name: 'Executable', extensions: ['exe']},
-          { name: 'All Files', extensions: ['*'] }
-        ],
-        properties: ['openFile']
+      let options = {}
+      if (process.platform === 'win32') {
+        options = {
+          title: 'Find a Program',
+          buttonLabel: 'Pick file',
+          filters: [
+            {name: 'Executable', extensions: ['exe']},
+            {name: 'All Files', extensions: ['*']}
+          ],
+          properties: ['openFile']
+        }
+      } else {
+        options = {
+          title: 'Find a Program',
+          buttonLabel: 'Pick shortcut',
+          defaultPath: config.LinuxPath,
+          filters: [
+            {name: 'Shortcut', extensions: ['desktop']},
+            {name: 'All Files', extensions: ['*']}
+          ],
+          properties: ['openFile']
+        }
       }
 
       let filePath = await dialog.showOpenDialog(WIN, options)

@@ -2,17 +2,21 @@
   <div>
     <div class="container-fluid" id="wrapper">
       <div class="row">
-        <button class="btn btn-default pull-left firstButton buttonHover" @click="showModal">Save As</button>
+        <div class="btn-group pull-left firstButton">
+          <button class="btn btn-default buttonHover" @click="showModal">Save As</button>
+            <button
+              class="btn btn-default btn-dropdown buttonHover"
+              @click="showDropdown = !showDropdown"
+            >Profiles</button>
+          <button class="btn btn-default buttonHover" @click="clearAll">Reset</button>
+        </div>
         <div class="dropdown">
-          <button
-            class="btn btn-default btn-dropdown secondButton buttonHover"
-            @click="showDropdown = !showDropdown"
-          >Profiles</button>
           <div class="dropdown-content" v-if="showDropdown">
-            <div class="content" v-for="profile in profiles" :key="profile">
+            <div v-if="profiles.length == 0">No Profiles saved</div>
+            <div v-else class="content" v-for="profile in profiles" :key="profile">
               <button
                 @click="loadProfile(profile)"
-                class="btn btn-mini btn-primary pull-left buttonPrimaryHover"
+                class="btn btn-mini btn-primary buttonPrimaryHover"
               >{{profile}}</button>
               <button
                 class="btn btn-mini btn-default rename buttonHover"
@@ -32,14 +36,7 @@
         <div class="row">
           How many programs: {{numbers}}
           <div class="slidecontainer">
-            <input
-              type="range"
-              min="1"
-              max="20"
-              value="5"
-              class="slider"
-              v-model="numbers"
-            />
+            <input type="range" min="1" max="40" value="5" class="slider" v-model="numbers" />
           </div>
         </div>
         <div class="row">
@@ -53,25 +50,46 @@
                 <div class="user-select">Choose your program</div>
               </div>
               <div class="row">
-                <div class="btn-group" style="padding-left: 5%;">
+                <div class="btn-group" style="margin-left: 10px;">
                   <file-ingest @load="addUrl" :input="program"></file-ingest>
-                  <button class="btn btn-default buttonHover"  @click="showSearch(program.id)">
+                  <button
+                    class="btn btn-mini btn-default buttonHover"
+                    @click="showSearch(program.id)"
+                  >
                     <span
                       class="icon"
-                      :class="[whichTextBox == program.id ? 'icon-down-open-big' : 'icon-up-open-big']"
-                    ></span>&nbsp; Search 
+                      :class="[whichTextBox == program.id ? 'icon-up-open-big' : 'icon-down-open-big']"
+                    ></span>&nbsp; Search
                   </button>
-                  <button class="btn btn-default buttonHover" @click="ClearProgram(program.id)">
+                  <button
+                    class="btn btn-mini btn-default buttonHover tooltip"
+                    @click="openOptions(program.id)"
+                    v-if="program.url"
+                  >
+                    <span class="icon icon-cog"></span>
+                    <span class="tooltiptext">Add options to program</span>
+                  </button>
+                  <button
+                    class="btn btn-mini btn-default buttonHover tooltip"
+                    @click="ClearProgram(program.id)"
+                  >
                     <span style="color: red;" class="icon icon-cancel"></span>Clear
+                    <span class="tooltiptext">Clear program from grid</span>
                   </button>
                 </div>
               </div>
-              <div class="row" v-if="!program.url && whichTextBox != program.id" >
-                <div class="box-input" @drop.prevent="addFile($event, program.id)" @dragenter.prevent @dragover.prevent="dragOver" @dragleave="dragLeave">
-                  <div class="inner-box"> Drag and Drop</div>
+              <div class="row" v-if="!program.url && whichTextBox != program.id">
+                <div
+                  class="box-input"
+                  @drop.prevent="addFile($event, program.id)"
+                  @dragenter.prevent
+                  @dragover.prevent="dragOver"
+                  @dragleave="dragLeave"
+                >
+                  <div class="inner-box">Drag and Drop</div>
                 </div>
               </div>
-              <div class="row" v-show="whichTextBox == program.id">
+              <div class="row" v-if="whichTextBox == program.id">
                 <form>
                   <div class="form-group mt-1">
                     <label for="pofileName">Search Program</label>
@@ -80,6 +98,7 @@
                       id="pofileName"
                       class="form-control"
                       placeholder="Outlook"
+                      v-focus
                       v-model="search"
                     />
                   </div>
@@ -105,14 +124,15 @@
                 <br />
                 <div class="col-md-2">
                   <img
-                    @click="openSingle(program.url)"
+                    @click="openSingle(program.url, program.options)"
                     v-if="program.icon"
+                    style="max-width: 36px;'"
                     class="pull-left"
                     :src="program.icon"
                     alt="Programs Icon"
                   />
                 </div>
-                <div class="col-md-10">{{program.url}}</div>
+                <div class="col-md-10" :id="program.url" :ref="program.url">{{program.url}} &nbsp; {{program.options}}</div>
               </div>
             </div>
           </div>
@@ -123,7 +143,9 @@
         v-show="isModalVisible"
         :reset="isModalVisible"
         :oldName="oldName"
+        :optionsIndex="optionsIndex"
         @close="closeModal"
+        @addOptions="addOptions"
       />
     </div>
   </div>
@@ -135,51 +157,38 @@
   import Vue from 'vue'
   import path from 'path'
   import config from '../assets/config'
+  import parser from '../services/linuxparse'
   const { shell } = require('electron')
   const app = require('electron').remote.app
   const settings = require('electron').remote.require('electron-settings')
-  
+  const exec = require('child_process').exec
+  const number = 5 // cheating with global number so it can be reused
+
+  class Program {
+    constructor (id, url, options, icon) {
+      this.id = id
+      this.url = url || ''
+      this.options = options || ''
+      this.icon = icon || ''
+    }
+  }
+
   export default {
     name: 'landing-page',
     components: { FileIngest, Modal },
     data: () => ({
       isModalVisible: false, // toggles visibility of the Save As modal
-      whichTextBox: null,
+      whichTextBox: null, // Program.id to render text box for search input
       profiles: [], // array of user profiles
-      numbers: 5, // default number of program boxes
+      numbers: number, // default number of program boxes
       showDropdown: false, // toggles the profile picker dropdown
       allSettings: {}, // object of all user settings
       oldName: null, // old profile name when renaming profile
       allPrograms: [], // array of applications found on default location
       search: '', // string to filter 'allPrograms' by
       searchId: 0, // which instnace of the 'programs' object is searching for an application
-      programs: [
-        {
-          id: 1,
-          url: '',
-          icon: ''
-        },
-        {
-          id: 2,
-          url: '',
-          icon: ''
-        },
-        {
-          id: 3,
-          url: '',
-          icon: ''
-        },
-        {
-          id: 4,
-          url: '',
-          icon: ''
-        },
-        {
-          id: 5,
-          url: '',
-          icon: ''
-        }
-      ] // array of objects of programs, and their locations
+      optionsIndex: null, // which program to add an options object to
+      programs: Array(number).fill(null).map((_, i) => new Program(i + 1)) // array Program
     }),
     mounted () {
       this.getProfiles()
@@ -196,7 +205,7 @@
       },
       loadProfile (profile) {
         this.showDropdown = false
-        this.programs = this.allSettings[profile]
+        this.programs = [...this.allSettings[profile]]
         this.numbers = this.programs.length
 
         this.programs.forEach(element => {
@@ -204,8 +213,6 @@
             this.getImage(element)
           }
         })
-        this.programs.push([])
-        this.programs.pop()
       },
       deleteProfile (profile) {
         settings.delete(profile)
@@ -217,16 +224,35 @@
         this.oldName = profile
         this.showModal()
       },
+      clearAll () {
+        this.numbers = number
+        this.programs = Array(number).fill(null).map((_, i) => new Program(i + 1))
+      },
       addUrl (data) {
+        // if Windows shortcut
         if (data.url.endsWith('.lnk')) {
           try {
             data.url = shell.readShortcutLink(data.url).target
           } catch (error) {}
         }
+
+        // if Linux shortcut
+        if (data.url.endsWith('.desktop')) {
+          this.processLinux(data)
+        } else {
+          const objIndex = this.programs.findIndex(obj => obj.id === data.id)
+          this.programs[objIndex].url = data.url
+          this.getImage(data)
+        }
         this.whichTextBox = null
+      },
+      async processLinux (data) {
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
-        this.programs[objIndex].url = data.url
-        this.getImage(data)
+        const parsed = await parser.parseDesktop(data.url)
+        const temp = this.programs[objIndex]
+        temp.url = parsed.url
+        temp.icon = parsed.icon
+        this.programs.splice(objIndex, 1, temp)
       },
       addFile (event, id) {
         if (event.dataTransfer.files[0]) {
@@ -236,25 +262,46 @@
       submit () {
         this.programs.forEach(element => {
           if (element.url) {
-            shell.openItem(element.url)
+            this.openSingle(element.url, element.options)
           }
         })
       },
-      openSingle (url) {
-        shell.openItem(url)
+      openSingle (url, options) {
+        // if windows, surround in double quotes
+        if (process.platform === 'win32') {
+          url = `"${url}"`
+        }
+        // if options exists, append to program
+        if (options !== undefined) {
+          url = `${url} ${options}`
+        }
+        exec(url, (err, stdout, stderr) => {
+          if (err) {
+            // manually add error to DOM;
+            // Don't want to polute the Program class
+            console.error(`exec error: ${err}`)
+            const program = url.trim()
+            const para = document.createElement('p')
+            const node = document.createTextNode(err)
+            para.appendChild(node)
+            para.setAttribute('class', 'error')
+            this.$refs[program][0].appendChild(para)
+          }
+        })
       },
       ClearProgram (id) {
-        const objIndex = this.programs.findIndex(obj => obj.id === id)
-        this.programs[objIndex].url = ''
         this.search = null
-        this.programs.push([])
-        this.programs.pop()
+        const objIndex = this.programs.findIndex(obj => obj.id === id)
+        const temp = new Program(this.programs[objIndex].id)
+        this.programs.splice(objIndex, 1, temp)
       },
       showModal () {
         this.isModalVisible = true
         this.showDropdown = false
+        this.optionsIndex = null
       },
       closeModal (data) {
+        console.log(data)
         this.isModalVisible = false
         this.oldName = null
         if (data) {
@@ -271,6 +318,19 @@
             this.getProfiles()
           }
         }
+      },
+      addOptions (data) {
+        this.isModalVisible = false
+        if (data) {
+          const objIndex = this.programs.findIndex(obj => obj.id === data.id)
+          const temp = this.programs[objIndex]
+          temp.options = data.text
+          this.programs.splice(objIndex, 1, temp)
+        }
+      },
+      openOptions (id) {
+        this.optionsIndex = id
+        this.isModalVisible = true
       },
       showSearch (data) {
         this.search = null
@@ -292,9 +352,9 @@
           icon = config.defaultIcon
         }
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
-        this.programs[objIndex].icon = icon
-        this.programs.push([])
-        this.programs.pop()
+        const temp = this.programs[objIndex]
+        temp.icon = icon
+        this.programs.splice(objIndex, 1, temp)
       },
       getList () {
         const klawSync = require('klaw-sync')
@@ -323,10 +383,7 @@
         // if adding to array
         if (diff > 0) {
           for (let index = 0; index < diff; index++) {
-            this.programs.push({
-              id: initial + (index + 1),
-              url: ''
-            })
+            this.programs.push(new Program(initial + (index + 1)))
           }
         }
 
@@ -343,6 +400,13 @@
         return this.allPrograms.filter(data => {
           return data.name.toLowerCase().includes(this.search.toLowerCase())
         })
+      }
+    },
+    directives: {
+      focus: {
+        inserted: function (el) {
+          el.focus()
+        }
       }
     }
   }
@@ -368,18 +432,25 @@ Vue.component('programIcon', {
     },
     methods: {
       getIcon (data) {
-        if (data.endsWith('.lnk')) {
-          try {
-            data = shell.readShortcutLink(data).target
-          } catch (error) {}
+        if (data.endsWith('.desktop')) {
+          parser.parseDesktop(data)
+            .then(response => {
+              this.icon = response.icon
+            })
+        } else {
+          if (data.endsWith('.lnk')) {
+            try {
+              data = shell.readShortcutLink(data).target
+            } catch (error) {}
+          }
+          app.getFileIcon(data)
+            .then(NativeImage => {
+              this.icon = NativeImage.toDataURL()
+            })
         }
-        app.getFileIcon(data)
-          .then(NativeImage => {
-            this.icon = NativeImage.toDataURL()
-          })
       }
     },
-    template: '<img style="background-image:none" :src="icon">'
+    template: '<img style="background-image:none; max-width: 36px;" :src="icon">'
 })
 </script>
 
@@ -394,30 +465,34 @@ Vue.component('programIcon', {
       format("woff2");
 }
 
-/* Scorllbar */
+/* Scrollbar */
 .scrollable {
   overflow-y: auto;
+  overflow-x: hidden;
   height: 75vh;
+  display: list-item; /* this seems to allow the tooltip to not get cliped on the top row */
 }
 .scrollable::-webkit-scrollbar-track {
-  background-color: #F5F5F5;
+  background-color: rgb(245, 245, 245);
   border-radius: 10px;
 }
 .scrollable::-webkit-scrollbar {
   width: 10px;
-  background-color: #F5F5F5;
+  background-color: rgb(245, 245, 245);
 }
 .scrollable::-webkit-scrollbar-thumb {
-  background-color: #3366FF;
+  background-color: rgb(51, 102, 255);
   border-radius: 10px;
-  background-image: -webkit-linear-gradient(0deg,
+  background-image: -webkit-linear-gradient(
+    0deg,
     rgba(255, 255, 255, 0.5) 25%,
     transparent 25%,
     transparent 50%,
     rgba(255, 255, 255, 0.5) 50%,
     rgba(255, 255, 255, 0.5) 75%,
     transparent 75%,
-    transparent)
+    transparent
+  );
 }
 
 .inputForm {
@@ -439,7 +514,7 @@ Vue.component('programIcon', {
   width: 100%;
   height: 15px;
   border-radius: 5px;
-  background: #d3d3d3;
+  background: rgb(211, 211, 211);
   outline: none;
   opacity: 0.7;
   -webkit-transition: 0.2s;
@@ -455,12 +530,12 @@ Vue.component('programIcon', {
   -webkit-appearance: none;
   appearance: none;
   display: block;
-  background: black;
+  background: rgb(0, 0, 0);
   border-radius: 100%;
   width: 25px;
   height: 25px;
   margin: 0;
-  background: radial-gradient(circle at 10px 10px, #5cabff, #000);
+  background: radial-gradient(circle at 10px 10px, rgb(92, 171, 255), rgb(0, 0, 0));
   cursor: pointer;
 }
 
@@ -473,15 +548,19 @@ Vue.component('programIcon', {
 }
 
 .firstButton {
-  top: 1.9rem;
-  left: 0.2rem;
+  top: 0.3rem;
+  left: 2.2rem;
   position: absolute;
 }
-
 .secondButton {
   position: absolute;
-  top: 1.9rem;
-  left: 3.7rem;
+  top: 0.3rem;
+  left: 5.6rem;
+}
+.thirdButton{
+  position: absolute;
+  top: 0.3rem;
+  left: 9.7rem;
 }
 
 .dropdown-content-hide {
@@ -489,7 +568,7 @@ Vue.component('programIcon', {
   position: absolute;
   top: -8px;
   left: 42px;
-  background-color: #f9f9f9;
+  background-color: rgb(249, 249, 249);
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   padding: 12px 16px;
@@ -499,9 +578,9 @@ Vue.component('programIcon', {
 .dropdown-content {
   display: block;
   position: absolute;
-  top: 3.3rem;
-  left: 3.7rem;
-  background-color: #f9f9f9;
+  top: 1.8rem;
+  left: 5.6rem;
+  background-color: rgb(249, 249, 249);
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   padding: 12px 7px 0px;
@@ -528,14 +607,14 @@ Vue.component('programIcon', {
 
 .box-input {
   min-height: 55px;
-  outline: 2px dashed #92b0b3;
+  outline: 2px dashed rgb(146, 176, 179);
   outline-offset: -10px;
-  transition: outline-offset .15s ease-in-out, background-color .15s linear;
+  transition: outline-offset 0.15s ease-in-out, background-color 0.15s linear;
   z-index: 2;
 }
 .inner-box {
   position: absolute;
-  top: 54%;
+  top: 52%;
   left: 34%;
   z-index: -1;
 }
@@ -552,9 +631,15 @@ Vue.component('programIcon', {
   margin-right: -8px;
 }
 
+.error {
+  color: rgb(255, 0, 0);
+  margin-top: 0.2rem;
+  font-style: italic;
+}
+
 .deleteProfile {
   margin-left: 2rem;
-  color: red;
+  color: rgb(255, 0, 0);
   padding: 0.1rem 1rem;
   border-radius: 25px;
   cursor: pointer;
@@ -566,7 +651,7 @@ Vue.component('programIcon', {
 .content:hover,
 .content:focus {
   background-color: rgb(228, 228, 228);
-  text-decoration: underline;
+  /* text-decoration: underline; */
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
 }
 
@@ -585,12 +670,28 @@ img {
   padding: 0px 4px 5px 0px;
   border-radius: 15px;
 }
-img:hover,
-img:focus {
-  background-image: radial-gradient(
-    circle,
-    rgb(193, 193, 193),
-    rgba(146, 145, 145, 0)
-  );
+/*light theme*/
+@media screen and (prefers-color-scheme: light),
+  screen and (prefers-color-scheme: no-preference) {
+  img:hover,
+  img:focus {
+    background-image: radial-gradient(
+      circle,
+      rgb(62, 155, 244),
+      rgba(146, 145, 145, 0)
+    );
+  }
+}
+
+/*dark theme*/
+@media screen and (prefers-color-scheme: dark) {
+  img:hover,
+  img:focus {
+    background-image: radial-gradient(
+      circle,
+      rgb(193, 193, 193),
+      rgba(146, 145, 145, 0)
+    );
+  }
 }
 </style>
