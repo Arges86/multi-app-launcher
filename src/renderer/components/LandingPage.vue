@@ -8,7 +8,7 @@
               class="btn btn-default btn-dropdown buttonHover"
               @click="showDropdown = !showDropdown"
             >Profiles</button>
-          <button class="btn btn-default buttonHover" @click="clearAll">Clear</button>
+          <button class="btn btn-default buttonHover" @click="clearAll">Reset</button>
         </div>
         <div class="dropdown">
           <div class="dropdown-content" v-if="showDropdown">
@@ -193,7 +193,6 @@
     mounted () {
       this.getProfiles()
       this.getList()
-      console.log(this.programs)
     },
     methods: {
       getProfiles () {
