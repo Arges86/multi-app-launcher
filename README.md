@@ -9,6 +9,9 @@ Go to the [release page](https://github.com/Arges86/multi-app-launcher/releases)
 The portable, or installable .exe file both are available.  
 The installable instance will be a little faster running.  
 
+For linux with snap:   
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/multi-app-launcher)
+
 ## Usage 
 Simple open the app, then choose as many programs as you would like.  
 Increase the slider to get access to more program boxes.  
