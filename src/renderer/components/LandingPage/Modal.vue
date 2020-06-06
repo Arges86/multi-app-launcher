@@ -78,9 +78,13 @@
 export default {
   name: 'modal',
   props: {
-    oldName: '', // If renaming profile, this is the existing name
-    reset: false, // boolean value to nullify form so its blank
-    optionsIndex: '' // which program to add an options object to
+    oldName: String, // If renaming profile, this is the existing name
+    reset: {
+      type: Boolean,
+      required: false,
+      default: false
+    }, // boolean value to nullify form so its blank
+    optionsIndex: String // which program to add an options object to
   },
   data: () => ({
     name: '', // user inputed name
