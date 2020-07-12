@@ -84,7 +84,7 @@ export default {
       required: false,
       default: false
     }, // boolean value to nullify form so its blank
-    optionsIndex: String // which program to add an options object to
+    optionsIndex: Number // which program to add an options object to
   },
   data: () => ({
     name: '', // user inputed name
