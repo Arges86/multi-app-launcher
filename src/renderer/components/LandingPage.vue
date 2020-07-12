@@ -285,6 +285,7 @@
             const node = document.createTextNode(err)
             para.appendChild(node)
             para.setAttribute('class', 'error')
+            para.setAttribute('style', 'color: rgb(255, 0, 0);')
             this.$refs[program][0].appendChild(para)
           }
         })
@@ -292,6 +293,15 @@
       ClearProgram (id) {
         this.search = null
         const objIndex = this.programs.findIndex(obj => obj.id === id)
+        const prgm = this.programs[objIndex].url
+
+        // manually clears error from div block
+        const node = document.getElementById(prgm)
+        if (node) {
+          if (node.getElementsByClassName('error')[0]) {
+            node.getElementsByClassName('error')[0].innerText = ''
+          }
+        }
         const temp = new Program(this.programs[objIndex].id)
         this.programs.splice(objIndex, 1, temp)
       },
