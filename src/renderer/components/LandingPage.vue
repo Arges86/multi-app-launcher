@@ -41,6 +41,7 @@
         </div>
         <div class="row">
           <button class="btn btn-primary buttonPrimaryHover" @click="submit">Start All Programs</button>
+          <button class="btn btn-negative buttonNegative" @click="killProcesses">Kill All programs</button>
         </div>
         <div class="row mt-1 scrollable">
           <div v-for="(program, index) in programs" :key="program.id">
@@ -161,7 +162,6 @@
   import parser from '../services/linuxparse'
   const { shell } = require('electron')
   const app = require('electron').remote.app
-  const exec = require('child_process').exec
   const number = 5 // cheating with global number so it can be reused
 
   class Program {
@@ -182,7 +182,7 @@
       profiles: [], // array of user profiles
       numbers: number, // default number of program boxes
       showDropdown: false, // toggles the profile picker dropdown
-      allSettings: {}, // object of all user settings
+      allSettings: settings, // object of all user settings
       oldName: null, // old profile name when renaming profile
       allPrograms: [], // array of applications found on default location
       search: '', // string to filter 'allPrograms' by
@@ -202,7 +202,6 @@
             ([key, value]) => this.profiles.push(key)
           )
         }
-        console.log(this.profiles)
       },
       loadProfile (profile) {
         this.showDropdown = false
@@ -276,18 +275,21 @@
         if (options !== undefined) {
           url = `${url} ${options}`
         }
+        const { exec } = require('child_process')
         exec(url, (err, stdout, stderr) => {
           if (err) {
             // manually add error to DOM;
             // Don't want to polute the Program class
             console.error(`exec error: ${err}`)
-            const program = url.trim()
+            let program = url.trim()
+            program = program.replace(/"/g, '')
             const para = document.createElement('p')
             const node = document.createTextNode(err)
             para.appendChild(node)
             para.setAttribute('class', 'error')
             para.setAttribute('style', 'color: rgb(255, 0, 0);')
             this.$refs[program][0].appendChild(para)
+            // document.getElementById(program).appendChild(para)
           }
         })
       },
@@ -299,8 +301,9 @@
         // manually clears error from div block
         const node = document.getElementById(prgm)
         if (node) {
-          if (node.getElementsByClassName('error')[0]) {
-            node.getElementsByClassName('error')[0].innerText = ''
+          const error = node.getElementsByClassName('error')[0]
+          if (error) {
+            error.parentNode.removeChild(error)
           }
         }
         const temp = new Program(this.programs[objIndex].id)
@@ -384,6 +387,54 @@
       },
       dragLeave (event) {
         event.target.style['outline-offset'] = '-10px'
+      },
+      killProcesses () {
+        const { exec } = require('child_process')
+
+        this.programs.forEach(element => {
+          if (element.url) {
+            const splitted = (element.url.split('\\'))
+            const last = splitted[splitted.length - 1]
+            console.log('Closing program, ', last)
+
+            // manually clears error from div block
+            let program = element.url.trim()
+            program = program.replace(/"/g, '')
+            const node = document.getElementById(program)
+            if (node) {
+              const error = node.getElementsByClassName('error')[0]
+              if (error) {
+                error.parentNode.removeChild(error)
+              }
+            }
+
+            exec(this.getCommand(last), (error, stdout, stderr) => {
+              if (error) {
+                console.error(`exec error: ${error}`)
+
+                const para = document.createElement('p')
+                const node = document.createTextNode(error)
+                para.appendChild(node)
+                para.setAttribute('class', 'error')
+                para.setAttribute('style', 'color: rgb(255, 0, 0);')
+                this.$refs[program][0].appendChild(para)
+                return
+              }
+
+              if (stdout) {
+                console.log(`stdout: ${stdout}`)
+              }
+              console.error(`stderr: ${stderr}`)
+            })
+          }
+        })
+      },
+      getCommand (program) {
+        if (process.platform === 'win32') {
+          return `TASKKILL /IM ${program} /F`
+        } else {
+          return `killall '${program}'`
+        }
       }
     },
     watch: {
@@ -558,6 +609,13 @@ Vue.component('programIcon', {
   min-height: 116px;
 }
 
+.buttonNegative {
+  margin-left: 2rem;
+}
+.buttonNegative:hover {
+      background-image: linear-gradient(to bottom,#fc6c67 0,#fd1008 100%);
+}
+
 .firstButton {
   top: 0.3rem;
   left: 2.2rem;
@@ -704,5 +762,43 @@ img {
       rgba(146, 145, 145, 0)
     );
   }
+}
+
+/* The snackbar - position it at the bottom and in the middle of the screen */
+ #snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  margin-left: -125px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 2px;
+  padding: 16px;
+  position: fixed;
+  z-index: 1;
+  left: 50%;
+  bottom: 30px;
+}
+
+#snackbar.show {
+  visibility: visible;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+@-webkit-keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+@-webkit-keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+@keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
 }
 </style>
