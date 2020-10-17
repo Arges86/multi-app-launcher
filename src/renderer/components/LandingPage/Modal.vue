@@ -100,7 +100,8 @@ export default {
     close () {
       this.$emit('close')
     },
-    save () {
+    save (event) {
+      event.preventDefault()
       if (this.name) {
         this.$emit('close', {new: this.name, old: this.oldName})
       }

@@ -156,11 +156,11 @@
   import Modal from './LandingPage/Modal.vue'
   import Vue from 'vue'
   import path from 'path'
+  import settings from 'electron-settings'
   import config from '../assets/config'
   import parser from '../services/linuxparse'
   const { shell } = require('electron')
   const app = require('electron').remote.app
-  const settings = require('electron').remote.require('electron-settings')
   const exec = require('child_process').exec
   const number = 5 // cheating with global number so it can be reused
 
@@ -196,12 +196,13 @@
     },
     methods: {
       getProfiles () {
-        this.allSettings = settings.getAll()
+        this.allSettings = settings.getSync()
         if (this.allSettings) {
           Object.entries(this.allSettings).forEach(
             ([key, value]) => this.profiles.push(key)
           )
         }
+        console.log(this.profiles)
       },
       loadProfile (profile) {
         this.showDropdown = false
@@ -215,7 +216,7 @@
         })
       },
       deleteProfile (profile) {
-        settings.delete(profile)
+        settings.unsetSync(profile)
         this.profiles = []
         this.showDropdown = false
         this.getProfiles()
@@ -318,12 +319,12 @@
           // if renaming existing profile
           if (data.old) {
             const temp = this.allSettings[data.old]
-            settings.set(data.new, temp)
+            settings.setSync(data.new, temp)
             this.deleteProfile(data.old)
 
           // if saving new profile
           } else if (data.new) {
-            settings.set(data.new, this.programs)
+            settings.setSync(data.new, this.programs)
             this.profiles = []
             this.getProfiles()
           }
