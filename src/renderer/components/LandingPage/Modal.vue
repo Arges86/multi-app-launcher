@@ -54,9 +54,9 @@
                   id="pofileName"
                   class="form-control"
                   ref="pofileName"
-                  placeholder="Profile1"
+                  placeholder="Work Profile"
                   v-model="name"
-                  @keyup.enter="save"
+                  @keydown.enter="save"
                   v-focus
                 />
               </div>
@@ -102,6 +102,7 @@ export default {
       this.$emit('close')
     },
     save (event) {
+      console.log(event)
       event.preventDefault()
       if (this.name) {
         this.$emit('close', {new: this.name, old: this.oldName})
