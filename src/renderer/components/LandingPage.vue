@@ -209,6 +209,7 @@
         this.showDropdown = false
         this.programs = [...this.allSettings[profile]]
         this.numbers = this.programs.length
+        this.removeAllErrors()
 
         this.programs.forEach(element => {
           if (!element.icon) {
@@ -333,6 +334,15 @@
             const element = error[0]
             element.parentNode.removeChild(element)
           }
+        }
+      },
+      /** Removes all .error divs from DOM */
+      removeAllErrors () {
+        const errors = document.getElementsByClassName('error')
+        while (errors.length > 0) {
+          console.log(errors.length)
+          const element = errors[0]
+          element.parentNode.removeChild(element)
         }
       },
       showModal () {
