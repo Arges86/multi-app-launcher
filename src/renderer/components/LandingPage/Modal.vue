@@ -97,15 +97,18 @@ export default {
     }
   },
   methods: {
-    close () {
+    close (event) {
+      event.preventDefault()
       this.$emit('close')
     },
-    save () {
+    save (event) {
+      event.preventDefault()
       if (this.name) {
         this.$emit('close', {new: this.name, old: this.oldName})
       }
     },
-    addOptions () {
+    addOptions (event) {
+      event.preventDefault()
       if (this.optionsText) {
         this.$emit('addOptions', {id: this.optionsIndex, text: this.optionsText})
       }

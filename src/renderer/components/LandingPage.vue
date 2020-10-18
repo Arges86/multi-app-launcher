@@ -41,6 +41,7 @@
         </div>
         <div class="row">
           <button class="btn btn-primary buttonPrimaryHover" @click="submit">Start All Programs</button>
+          <button class="btn btn-negative buttonNegative" @click="killProcesses">Kill All programs</button>
         </div>
         <div class="row mt-1 scrollable">
           <div v-for="(program, index) in programs" :key="program.id">
@@ -156,12 +157,11 @@
   import Modal from './LandingPage/Modal.vue'
   import Vue from 'vue'
   import path from 'path'
+  import settings from 'electron-settings'
   import config from '../assets/config'
   import parser from '../services/linuxparse'
   const { shell } = require('electron')
   const app = require('electron').remote.app
-  const settings = require('electron').remote.require('electron-settings')
-  const exec = require('child_process').exec
   const number = 5 // cheating with global number so it can be reused
 
   class Program {
@@ -182,7 +182,7 @@
       profiles: [], // array of user profiles
       numbers: number, // default number of program boxes
       showDropdown: false, // toggles the profile picker dropdown
-      allSettings: {}, // object of all user settings
+      allSettings: settings, // object of all user settings
       oldName: null, // old profile name when renaming profile
       allPrograms: [], // array of applications found on default location
       search: '', // string to filter 'allPrograms' by
@@ -195,14 +195,16 @@
       this.getList()
     },
     methods: {
+      /** Gets all profiles from system settings */
       getProfiles () {
-        this.allSettings = settings.getAll()
+        this.allSettings = settings.getSync()
         if (this.allSettings) {
           Object.entries(this.allSettings).forEach(
             ([key, value]) => this.profiles.push(key)
           )
         }
       },
+      /** Populates display with saves program list */
       loadProfile (profile) {
         this.showDropdown = false
         this.programs = [...this.allSettings[profile]]
@@ -214,20 +216,24 @@
           }
         })
       },
+      /** Deletes a rpfile from settings */
       deleteProfile (profile) {
-        settings.delete(profile)
+        settings.unsetSync(profile)
         this.profiles = []
         this.showDropdown = false
         this.getProfiles()
       },
+      /** Triggers modal for profile renaming */
       renameProfile (profile) {
         this.oldName = profile
         this.showModal()
       },
+      /** Clears whole display */
       clearAll () {
         this.numbers = number
         this.programs = Array(number).fill(null).map((_, i) => new Program(i + 1))
       },
+      /** Adds app location to program array */
       addUrl (data) {
         // if Windows shortcut
         if (data.url.endsWith('.lnk')) {
@@ -246,6 +252,7 @@
         }
         this.whichTextBox = null
       },
+      /** Gets program name from `.desktop` shortcut */
       async processLinux (data) {
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
         const parsed = await parser.parseDesktop(data.url)
@@ -254,11 +261,13 @@
         temp.icon = parsed.icon
         this.programs.splice(objIndex, 1, temp)
       },
+      /** Triggered on drop event to add file to list */
       addFile (event, id) {
         if (event.dataTransfer.files[0]) {
           this.addUrl({id: id, url: event.dataTransfer.files[0].path})
         }
       },
+      /** Starts all programs in view */
       submit () {
         this.programs.forEach(element => {
           if (element.url) {
@@ -266,6 +275,7 @@
           }
         })
       },
+      /** Opens individual program */
       openSingle (url, options) {
         // if windows, surround in double quotes
         if (process.platform === 'win32') {
@@ -275,41 +285,62 @@
         if (options !== undefined) {
           url = `${url} ${options}`
         }
-        exec(url, (err, stdout, stderr) => {
+        this.clearError(url)
+        const { exec } = require('child_process')
+        const script = exec(url, (err, stdout, stderr) => {
           if (err) {
             // manually add error to DOM;
             // Don't want to polute the Program class
             console.error(`exec error: ${err}`)
-            const program = url.trim()
+            let program = url.trim()
+            program = program.replace(/"/g, '')
             const para = document.createElement('p')
             const node = document.createTextNode(err)
             para.appendChild(node)
             para.setAttribute('class', 'error')
             para.setAttribute('style', 'color: rgb(255, 0, 0);')
             this.$refs[program][0].appendChild(para)
+            // document.getElementById(program).appendChild(para)
           }
         })
+        // after three seconds, kill process, and remove listner
+        // otherwise, when process is killed, an `err` is emmitted
+        setTimeout(function () {
+          script.stdout.removeAllListeners()
+          script.stdin.pause()
+          script.kill()
+        }, 3000)
       },
+      /** Clears a single program box */
       ClearProgram (id) {
         this.search = null
         const objIndex = this.programs.findIndex(obj => obj.id === id)
         const prgm = this.programs[objIndex].url
 
-        // manually clears error from div block
-        const node = document.getElementById(prgm)
-        if (node) {
-          if (node.getElementsByClassName('error')[0]) {
-            node.getElementsByClassName('error')[0].innerText = ''
-          }
-        }
+        this.clearError(prgm)
         const temp = new Program(this.programs[objIndex].id)
         this.programs.splice(objIndex, 1, temp)
+      },
+      /** Manually updates DOM to clear any error elements */
+      clearError (data) {
+        let program = data.trim()
+        program = program.replace(/"/g, '')
+        const node = document.getElementById(program)
+        if (node) {
+          const error = node.getElementsByClassName('error')
+          // loops through all error divs and removes them (in case there are more than one)
+          while (error.length > 0) {
+            const element = error[0]
+            element.parentNode.removeChild(element)
+          }
+        }
       },
       showModal () {
         this.isModalVisible = true
         this.showDropdown = false
         this.optionsIndex = null
       },
+      /** Upon modal closal event, update profile list */
       closeModal (data) {
         console.log(data)
         this.isModalVisible = false
@@ -318,17 +349,18 @@
           // if renaming existing profile
           if (data.old) {
             const temp = this.allSettings[data.old]
-            settings.set(data.new, temp)
+            settings.setSync(data.new, temp)
             this.deleteProfile(data.old)
 
           // if saving new profile
           } else if (data.new) {
-            settings.set(data.new, this.programs)
+            settings.setSync(data.new, this.programs)
             this.profiles = []
             this.getProfiles()
           }
         }
       },
+      /** Add a startup option to the program object */
       addOptions (data) {
         this.isModalVisible = false
         if (data) {
@@ -338,10 +370,12 @@
           this.programs.splice(objIndex, 1, temp)
         }
       },
+      /** Opens the options modal */
       openOptions (id) {
         this.optionsIndex = id
         this.isModalVisible = true
       },
+      /** Toggles the searh form */
       showSearch (data) {
         this.search = null
         if (this.whichTextBox === data) {
@@ -350,6 +384,10 @@
           this.whichTextBox = data
         }
       },
+      /**
+       * Gets an app's icon from its file.
+       * Then sets the icon as a base64 string as a property of the program
+       */
       async getImage (data) {
         let icon
         try {
@@ -366,6 +404,7 @@
         temp.icon = icon
         this.programs.splice(objIndex, 1, temp)
       },
+      /** Gets list of all programs to search through */
       getList () {
         const klawSync = require('klaw-sync')
         try {
@@ -378,11 +417,61 @@
           console.error(er)
         }
       },
+      /** Adds style for drag even */
       dragOver (event) {
         event.target.style['outline-offset'] = '-5px'
       },
+      /** Resets style when drag even ends */
       dragLeave (event) {
         event.target.style['outline-offset'] = '-10px'
+      },
+      /** Kills all processes current in display */
+      killProcesses () {
+        const { exec } = require('child_process')
+
+        this.programs.forEach(element => {
+          if (element.url) {
+            const splitted = (element.url.split('\\'))
+            const last = splitted[splitted.length - 1]
+
+            this.clearError(element.url)
+
+            // main execution of command
+            exec(this.getCommand(last), (error, stdout, stderr) => {
+              if (error) {
+                console.error(`exec error: ${error}`)
+
+                // gets a more human friendly section of Error object
+                const str = error.toString()
+                const errArray = str.split(/\n/, 3)
+                const text = errArray.length > 2 ? errArray[1] : error
+
+                const para = document.createElement('p')
+                const node = document.createTextNode(text)
+                para.appendChild(node)
+                para.setAttribute('class', 'error')
+                para.setAttribute('style', 'color: rgb(255, 0, 0);')
+
+                let program = element.url.trim()
+                program = program.replace(/"/g, '')
+                this.$refs[program][0].appendChild(para)
+                return
+              }
+
+              if (stdout) {
+                console.log(`stdout: ${stdout}`)
+              }
+            })
+          }
+        })
+      },
+      /** Gets task skill string based off of operating system */
+      getCommand (program) {
+        if (process.platform === 'win32') {
+          return `TASKKILL /IM ${program} /F`
+        } else {
+          return `pkill -f '${program}'`
+        }
       }
     },
     watch: {
@@ -557,6 +646,13 @@ Vue.component('programIcon', {
   min-height: 116px;
 }
 
+.buttonNegative {
+  margin-left: 2rem;
+}
+.buttonNegative:hover {
+      background-image: linear-gradient(to bottom,#fc6c67 0,#fd1008 100%);
+}
+
 .firstButton {
   top: 0.3rem;
   left: 2.2rem;
@@ -703,5 +799,43 @@ img {
       rgba(146, 145, 145, 0)
     );
   }
+}
+
+/* The snackbar - position it at the bottom and in the middle of the screen */
+ #snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  margin-left: -125px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 2px;
+  padding: 16px;
+  position: fixed;
+  z-index: 1;
+  left: 50%;
+  bottom: 30px;
+}
+
+#snackbar.show {
+  visibility: visible;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+@-webkit-keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+@-webkit-keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+@keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
 }
 </style>

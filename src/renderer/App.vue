@@ -30,7 +30,7 @@
 
 <script>
 import github from './services/github'
-const remote = require('electron').remote
+const {remote} = require('electron')
 
 export default {
   name: 'bulk-modem-tool',
@@ -47,7 +47,7 @@ export default {
       remote.getCurrentWindow().close()
     },
     minimize () {
-      remote.getCurrentWindow().minimize()
+      remote.getCurrentWindow().close()
     },
     async getReleases () {
       this.checkingStatus = true
@@ -86,7 +86,8 @@ export default {
         parent: top,
         modal: true,
         webPreferences: {
-          nodeIntegration: true
+          nodeIntegration: true,
+          enableRemoteModule: true
         }
       })
       window.setMenu(null)
@@ -101,9 +102,9 @@ export default {
 </script>
 
 <style>
-@import "~@/assets/photon/css/photon.min.css";
-@import "~@/assets/css/bootstrap.css";
-@import "~@/assets/css/tooltip.css";
+@import "./assets/photon/css/photon.min.css";
+@import "./assets/css/bootstrap.css";
+@import "./assets/css/tooltip.css";
 
 * {
   box-sizing: border-box;
