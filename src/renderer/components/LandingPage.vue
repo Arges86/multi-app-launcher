@@ -470,7 +470,7 @@
         if (process.platform === 'win32') {
           return `TASKKILL /IM ${program} /F`
         } else {
-          return `killall '${program}'`
+          return `pkill -f '${program}'`
         }
       }
     },
