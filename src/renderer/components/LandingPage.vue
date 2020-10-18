@@ -285,6 +285,7 @@
         if (options !== undefined) {
           url = `${url} ${options}`
         }
+        this.clearError(url)
         const { exec } = require('child_process')
         const script = exec(url, (err, stdout, stderr) => {
           if (err) {
@@ -316,16 +317,23 @@
         const objIndex = this.programs.findIndex(obj => obj.id === id)
         const prgm = this.programs[objIndex].url
 
-        // manually clears error from div block
-        const node = document.getElementById(prgm)
-        if (node) {
-          const error = node.getElementsByClassName('error')[0]
-          if (error) {
-            error.parentNode.removeChild(error)
-          }
-        }
+        this.clearError(prgm)
         const temp = new Program(this.programs[objIndex].id)
         this.programs.splice(objIndex, 1, temp)
+      },
+      /** Manually updates DOM to clear any error elements */
+      clearError (data) {
+        let program = data.trim()
+        program = program.replace(/"/g, '')
+        const node = document.getElementById(program)
+        if (node) {
+          const error = node.getElementsByClassName('error')
+          // loops through all error divs and removes them (in case there are more than one)
+          while (error.length > 0) {
+            const element = error[0]
+            element.parentNode.removeChild(element)
+          }
+        }
       },
       showModal () {
         this.isModalVisible = true
@@ -425,29 +433,27 @@
           if (element.url) {
             const splitted = (element.url.split('\\'))
             const last = splitted[splitted.length - 1]
-            console.log('Closing program, ', last)
 
-            // manually clears error from div block
-            let program = element.url.trim()
-            program = program.replace(/"/g, '')
-            const node = document.getElementById(program)
-            if (node) {
-              const error = node.getElementsByClassName('error')[0]
-              if (error) {
-                error.parentNode.removeChild(error)
-              }
-            }
+            this.clearError(element.url)
 
             // main execution of command
             exec(this.getCommand(last), (error, stdout, stderr) => {
               if (error) {
                 console.error(`exec error: ${error}`)
 
+                // gets a more human friendly section of Error object
+                const str = error.toString()
+                const errArray = str.split(/\n/, 3)
+                const text = errArray.length > 2 ? errArray[1] : error
+
                 const para = document.createElement('p')
-                const node = document.createTextNode(error)
+                const node = document.createTextNode(text)
                 para.appendChild(node)
                 para.setAttribute('class', 'error')
                 para.setAttribute('style', 'color: rgb(255, 0, 0);')
+
+                let program = element.url.trim()
+                program = program.replace(/"/g, '')
                 this.$refs[program][0].appendChild(para)
                 return
               }
@@ -455,7 +461,6 @@
               if (stdout) {
                 console.log(`stdout: ${stdout}`)
               }
-              console.error(`stderr: ${stderr}`)
             })
           }
         })
