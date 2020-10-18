@@ -195,6 +195,7 @@
       this.getList()
     },
     methods: {
+      /** Gets all profiles from system settings */
       getProfiles () {
         this.allSettings = settings.getSync()
         if (this.allSettings) {
@@ -203,6 +204,7 @@
           )
         }
       },
+      /** Populates display with saves program list */
       loadProfile (profile) {
         this.showDropdown = false
         this.programs = [...this.allSettings[profile]]
@@ -214,20 +216,24 @@
           }
         })
       },
+      /** Deletes a rpfile from settings */
       deleteProfile (profile) {
         settings.unsetSync(profile)
         this.profiles = []
         this.showDropdown = false
         this.getProfiles()
       },
+      /** Triggers modal for profile renaming */
       renameProfile (profile) {
         this.oldName = profile
         this.showModal()
       },
+      /** Clears whole display */
       clearAll () {
         this.numbers = number
         this.programs = Array(number).fill(null).map((_, i) => new Program(i + 1))
       },
+      /** Adds app location to program array */
       addUrl (data) {
         // if Windows shortcut
         if (data.url.endsWith('.lnk')) {
@@ -246,6 +252,7 @@
         }
         this.whichTextBox = null
       },
+      /** Gets program name from `.desktop` shortcut */
       async processLinux (data) {
         const objIndex = this.programs.findIndex(obj => obj.id === data.id)
         const parsed = await parser.parseDesktop(data.url)
@@ -254,11 +261,13 @@
         temp.icon = parsed.icon
         this.programs.splice(objIndex, 1, temp)
       },
+      /** Triggered on drop event to add file to list */
       addFile (event, id) {
         if (event.dataTransfer.files[0]) {
           this.addUrl({id: id, url: event.dataTransfer.files[0].path})
         }
       },
+      /** Starts all programs in view */
       submit () {
         this.programs.forEach(element => {
           if (element.url) {
@@ -266,6 +275,7 @@
           }
         })
       },
+      /** Opens individual program */
       openSingle (url, options) {
         // if windows, surround in double quotes
         if (process.platform === 'win32') {
@@ -276,7 +286,7 @@
           url = `${url} ${options}`
         }
         const { exec } = require('child_process')
-        exec(url, (err, stdout, stderr) => {
+        const script = exec(url, (err, stdout, stderr) => {
           if (err) {
             // manually add error to DOM;
             // Don't want to polute the Program class
@@ -292,7 +302,15 @@
             // document.getElementById(program).appendChild(para)
           }
         })
+        // after three seconds, kill process, and remove listner
+        // otherwise, when process is killed, an `err` is emmitted
+        setTimeout(function () {
+          script.stdout.removeAllListeners()
+          script.stdin.pause()
+          script.kill()
+        }, 3000)
       },
+      /** Clears a single program box */
       ClearProgram (id) {
         this.search = null
         const objIndex = this.programs.findIndex(obj => obj.id === id)
@@ -314,6 +332,7 @@
         this.showDropdown = false
         this.optionsIndex = null
       },
+      /** Upon modal closal event, update profile list */
       closeModal (data) {
         console.log(data)
         this.isModalVisible = false
@@ -333,6 +352,7 @@
           }
         }
       },
+      /** Add a startup option to the program object */
       addOptions (data) {
         this.isModalVisible = false
         if (data) {
@@ -342,10 +362,12 @@
           this.programs.splice(objIndex, 1, temp)
         }
       },
+      /** Opens the options modal */
       openOptions (id) {
         this.optionsIndex = id
         this.isModalVisible = true
       },
+      /** Toggles the searh form */
       showSearch (data) {
         this.search = null
         if (this.whichTextBox === data) {
@@ -354,6 +376,10 @@
           this.whichTextBox = data
         }
       },
+      /**
+       * Gets an app's icon from its file.
+       * Then sets the icon as a base64 string as a property of the program
+       */
       async getImage (data) {
         let icon
         try {
@@ -370,6 +396,7 @@
         temp.icon = icon
         this.programs.splice(objIndex, 1, temp)
       },
+      /** Gets list of all programs to search through */
       getList () {
         const klawSync = require('klaw-sync')
         try {
@@ -382,12 +409,15 @@
           console.error(er)
         }
       },
+      /** Adds style for drag even */
       dragOver (event) {
         event.target.style['outline-offset'] = '-5px'
       },
+      /** Resets style when drag even ends */
       dragLeave (event) {
         event.target.style['outline-offset'] = '-10px'
       },
+      /** Kills all processes current in display */
       killProcesses () {
         const { exec } = require('child_process')
 
@@ -408,6 +438,7 @@
               }
             }
 
+            // main execution of command
             exec(this.getCommand(last), (error, stdout, stderr) => {
               if (error) {
                 console.error(`exec error: ${error}`)
@@ -429,6 +460,7 @@
           }
         })
       },
+      /** Gets task skill string based off of operating system */
       getCommand (program) {
         if (process.platform === 'win32') {
           return `TASKKILL /IM ${program} /F`
