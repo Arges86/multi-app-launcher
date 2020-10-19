@@ -1,6 +1,6 @@
 # Mult App Launcher
 
-> Multi App Launcher
+> Cross Platform Multi App Launcher
 
 This is a small [electron](https://www.electronjs.org/) application that allows multiple applications to be launched simultaneously.  
 
@@ -77,6 +77,7 @@ npm run build
 npm run lint
 
 ```
+The build step (for Windows) will create the installable and portable application for deployment.
 
 ---
 
