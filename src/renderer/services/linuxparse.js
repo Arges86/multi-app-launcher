@@ -12,7 +12,7 @@ export default {
     let icon = ''
 
     try {
-      const {stdout} = await exec(`dpkg-query -L ${command} | grep png`)
+      const { stdout } = await exec(`dpkg-query -L ${command} | grep png`)
       if (stdout) {
         // gets first icon from list
         icon = (stdout.split('\n'))[0]

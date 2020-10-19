@@ -1,8 +1,12 @@
 {
   "name": "multi-app-launcher",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Stephen Thompson",
   "description": "Multi App Launcher",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Arges86/multi-app-launcher"
+  },
   "license": "MIT",
   "main": "./dist/electron/main.js",
   "scripts": {
@@ -18,6 +22,10 @@
     "pack:renderer": "cross-env NODE_ENV=production webpack --progress --colors --config .electron-vue/webpack.renderer.config.js",
     "postinstall": "npm run lint:fix"
   },
+  "keywords": [
+    "Electron",
+    "Application Launcher"
+  ],
   "build": {
     "productName": "Multi App Launcher",
     "appId": "multi-app-launcher",
@@ -46,26 +54,28 @@
       "icon": "build/icons/icon.icns"
     },
     "win": {
+      "target": ["nsis", "portable"],
       "icon": "build/icons/icon.ico"
     },
     "linux": {
+      "target": ["AppImage", "snap"],
       "icon": "build/icons"
     }
   },
   "dependencies": {
-    "axios": "^0.19.2",
-    "electron-context-menu": "^1.0.0",
-    "electron-settings": "^3.2.0",
+    "axios": "^0.20.0",
+    "electron-context-menu": "^2.3.0",
+    "electron-settings": "^4.0.2",
     "ini": "^1.3.5",
     "klaw-sync": "^6.0.0",
-    "vue": "^2.5.16",
+    "vue": "^2.6.12",
     "vue-electron": "^1.0.6",
-    "vue-router": "^3.2.0",
-    "vuex": "^3.4.0",
+    "vue-router": "^3.4.7",
+    "vuex": "^3.5.1",
     "vuex-electron": "^1.0.0"
   },
   "devDependencies": {
-    "ajv": "^6.12.2",
+    "ajv": "^6.12.6",
     "babel-core": "^6.26.3",
     "babel-eslint": "^8.2.3",
     "babel-loader": "^7.1.4",
@@ -74,27 +84,27 @@
     "babel-preset-env": "^1.7.0",
     "babel-preset-stage-0": "^6.24.1",
     "babel-register": "^6.26.0",
-    "cfonts": "^2.8.2",
-    "chalk": "^4.0.0",
+    "cfonts": "^2.8.5",
+    "chalk": "^4.1.0",
     "copy-webpack-plugin": "^4.5.1",
     "cross-env": "^7.0.2",
-    "css-loader": "^3.5.3",
-    "del": "^5.1.0",
+    "css-loader": "^3.6.0",
+    "del": "^6.0.0",
     "devtron": "^1.4.0",
-    "electron": "^8.3.0",
-    "electron-builder": "^22.6.1",
+    "electron": "^10.1.3",
+    "electron-builder": "^22.9.1",
     "electron-debug": "^3.1.0",
-    "electron-devtools-installer": "^3.0.0",
+    "electron-devtools-installer": "^3.1.1",
     "eslint": "^4.19.1",
     "eslint-config-standard": "^11.0.0",
     "eslint-friendly-formatter": "^4.0.1",
     "eslint-loader": "^2.0.0",
     "eslint-plugin-html": "^4.0.3",
-    "eslint-plugin-import": "^2.12.0",
+    "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-node": "^6.0.1",
     "eslint-plugin-promise": "^3.8.0",
     "eslint-plugin-standard": "^3.1.0",
-    "file-loader": "^6.0.0",
+    "file-loader": "^6.1.1",
     "html-webpack-plugin": "^3.2.0",
     "mini-css-extract-plugin": "0.4.0",
     "multispinner": "^0.2.1",
@@ -104,11 +114,11 @@
     "style-loader": "^1.2.1",
     "url-loader": "^4.1.0",
     "vue-html-loader": "^1.2.4",
-    "vue-loader": "^15.9.2",
+    "vue-loader": "^15.9.3",
     "vue-style-loader": "^4.1.0",
-    "vue-template-compiler": "^2.5.16",
+    "vue-template-compiler": "^2.6.12",
     "webpack": "^4.43.0",
-    "webpack-cli": "^3.0.8",
+    "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.11.0",
     "webpack-hot-middleware": "^2.22.2",
     "webpack-merge": "^4.1.3"

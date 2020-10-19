@@ -54,9 +54,9 @@
                   id="pofileName"
                   class="form-control"
                   ref="pofileName"
-                  placeholder="Profile1"
+                  placeholder="Work Profile"
                   v-model="name"
-                  @keyup.enter="save"
+                  @keydown.enter="save"
                   v-focus
                 />
               </div>
@@ -78,9 +78,13 @@
 export default {
   name: 'modal',
   props: {
-    oldName: '', // If renaming profile, this is the existing name
-    reset: false, // boolean value to nullify form so its blank
-    optionsIndex: '' // which program to add an options object to
+    oldName: String, // If renaming profile, this is the existing name
+    reset: {
+      type: Boolean,
+      required: false,
+      default: false
+    }, // boolean value to nullify form so its blank
+    optionsIndex: Number // which program to add an options object to
   },
   data: () => ({
     name: '', // user inputed name
@@ -93,15 +97,19 @@ export default {
     }
   },
   methods: {
-    close () {
+    close (event) {
+      event.preventDefault()
       this.$emit('close')
     },
-    save () {
+    save (event) {
+      console.log(event)
+      event.preventDefault()
       if (this.name) {
         this.$emit('close', {new: this.name, old: this.oldName})
       }
     },
-    addOptions () {
+    addOptions (event) {
+      event.preventDefault()
       if (this.optionsText) {
         this.$emit('addOptions', {id: this.optionsIndex, text: this.optionsText})
       }

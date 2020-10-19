@@ -1,6 +1,6 @@
 # Mult App Launcher
 
-> Multi App Launcher
+> Cross Platform Multi App Launcher
 
 This is a small [electron](https://www.electronjs.org/) application that allows multiple applications to be launched simultaneously.  
 
@@ -34,7 +34,7 @@ You can have as many profiles as you like.
 ![Profile](screenshots/profiles.png)
 
 Lastly, can you add optional arguments to the startup command.  
-For instance, to start Chrome in 'Incognito', click the gear icon and type `--incognito`  
+For instance, to start Chrome in 'Incognito', click the gear icon and type `-incognito`  
 into the options modal.  
 Many programs have startup options that can be set. Two examples are:   
 Firefox's list can be found [here](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options).  
@@ -77,6 +77,7 @@ npm run build
 npm run lint
 
 ```
+The build step (for Windows) will create the installable and portable application for deployment.
 
 ---
 
