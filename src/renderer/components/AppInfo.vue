@@ -68,7 +68,7 @@ export default {
     },
     openLatest () {
       const { shell } = require('electron')
-      shell.openItem(this.releases[0].html_url)
+      shell.openExternal(this.releases[0].html_url)
     }
   },
   computed: {
