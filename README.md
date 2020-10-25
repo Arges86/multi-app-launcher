@@ -2,6 +2,8 @@
 
 > Cross Platform Multi App Launcher
 
+[![multi-app-launcher](https://snapcraft.io/multi-app-launcher/badge.svg)](https://snapcraft.io/multi-app-launcher)
+
 This is a small [electron](https://www.electronjs.org/) application that allows multiple applications to be launched simultaneously.  
 
 ## Install
