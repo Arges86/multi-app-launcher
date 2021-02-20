@@ -47,7 +47,7 @@ export default {
       remote.getCurrentWindow().close()
     },
     minimize () {
-      remote.getCurrentWindow().close()
+      remote.getCurrentWindow().minimize()
     },
     async getReleases () {
       this.checkingStatus = true
