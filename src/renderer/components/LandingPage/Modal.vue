@@ -6,7 +6,7 @@
         role="dialog"
         aria-labelledby="modalTitle"
         aria-describedby="modalDescription"
-        style="position: relative;"
+        style="position: relative"
       >
         <!-- For Options dialog -->
         <span v-if="optionsIndex">
@@ -34,14 +34,16 @@
               class="btn btn-primary pull-right"
               :disabled="!optionsText"
               @click="addOptions"
-            >Add</button>
+            >
+              Add
+            </button>
           </section>
         </span>
 
         <!-- For profile dialog -->
         <span v-else>
           <header class="modal-header" id="modalTitle">
-            <span v-if="oldName">Rename {{oldName}} to:</span>
+            <span v-if="oldName">Rename {{ oldName }} to:</span>
             <span v-else>Save Profile As:</span>
             <span @click="close" class="icon icon-cancel close-button"></span>
           </header>
@@ -62,10 +64,12 @@
               </div>
             </form>
             <button
-              class="btn btn-primary pull-right" 
-              :disabled="!name" 
+              class="btn btn-primary pull-right"
+              :disabled="!name"
               @click="save"
-              >Save</button>
+            >
+              Save
+            </button>
           </section>
         </span>
       </div>
@@ -74,7 +78,6 @@
 </template>
 
 <script>
-
 export default {
   name: 'modal',
   props: {
@@ -105,13 +108,16 @@ export default {
       console.log(event)
       event.preventDefault()
       if (this.name) {
-        this.$emit('close', {new: this.name, old: this.oldName})
+        this.$emit('close', { new: this.name, old: this.oldName })
       }
     },
     addOptions (event) {
       event.preventDefault()
       if (this.optionsText) {
-        this.$emit('addOptions', {id: this.optionsIndex, text: this.optionsText})
+        this.$emit('addOptions', {
+          id: this.optionsIndex,
+          text: this.optionsText
+        })
       }
     }
   },

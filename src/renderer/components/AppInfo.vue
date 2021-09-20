@@ -4,23 +4,27 @@
       <h4>App Info</h4>
     </div>
     <div>
-      <p>{{updateStatus}}</p>
+      <p>{{ updateStatus }}</p>
       <div class="mt-1">
-        <p><strong>Application Version:</strong> {{version}}</p>
-        <p><strong>Application Name:</strong> {{name}}</p>
+        <p><strong>Application Version:</strong> {{ version }}</p>
+        <p><strong>Application Name:</strong> {{ name }}</p>
         <p><strong>App Resources:</strong></p>
-        <p class="ml-1"><strong>CPU Usage:</strong> {{cpuUsage.toFixed(3)}} %</p>
-        <p class="ml-1"><strong>Memory Usage:</strong> {{memUsage.toLocaleString('en')}} KB</p>
+        <p class="ml-1">
+          <strong>CPU Usage:</strong> {{ cpuUsage.toFixed(3) }} %
+        </p>
+        <p class="ml-1">
+          <strong>Memory Usage:</strong> {{ memUsage.toLocaleString("en") }} KB
+        </p>
       </div>
     </div>
     <div class="mt-1" v-if="updateAvailable">
       <button class="btn btn-large btn-primary" @click="openLatest">
-        <span style="color: white;" class="icon icon-github-circled"></span> &nbsp;
-        Download newest version
+        <span style="color: white" class="icon icon-github-circled"></span>
+        &nbsp; Download newest version
       </button>
       <div class="mt-1">
         <strong>Release Notes:</strong>
-        <pre>{{releases[0].body}}</pre>
+        <pre>{{ releases[0].body }}</pre>
       </div>
     </div>
   </div>
@@ -51,7 +55,8 @@ export default {
         this.releases = await github.getReleases()
         this.getLatest(this.releases)
       } catch (error) {
-        this.updateStatus = 'Error getting release info. Please try again later.'
+        this.updateStatus =
+          'Error getting release info. Please try again later.'
       }
     },
     getLatest (data) {
@@ -73,12 +78,14 @@ export default {
   },
   computed: {
     cpuUsage () {
-      return this.ProcessMetric.map(data => data.cpu.percentCPUUsage)
-        .reduce((a, b) => a + b)
+      return this.ProcessMetric.map((data) => data.cpu.percentCPUUsage).reduce(
+        (a, b) => a + b
+      )
     },
     memUsage () {
-      return this.ProcessMetric.map(data => data.memory.workingSetSize)
-        .reduce((a, b) => a + b)
+      return this.ProcessMetric.map(
+        (data) => data.memory.workingSetSize
+      ).reduce((a, b) => a + b)
     }
   }
 }

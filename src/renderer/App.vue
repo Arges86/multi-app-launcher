@@ -4,8 +4,15 @@
       <div class="row">
         <div class="col-md-4">
           <img @click="getMenu" class="ProgramIcon" src="~@/assets/icon.png" />
-          <span v-if="showStatus" class="icon icon-arrows-ccw status-icon"></span>
-          <span v-if="showStatus" @click="getMenu" class="icon icon-info-circled status-icon"></span>
+          <span
+            v-if="showStatus"
+            class="icon icon-arrows-ccw status-icon"
+          ></span>
+          <span
+            v-if="showStatus"
+            @click="getMenu"
+            class="icon icon-info-circled status-icon"
+          ></span>
         </div>
         <div class="col-md-4">
           <span class="title">
@@ -16,10 +23,16 @@
         </div>
         <div class="col-md-4">
           <!-- <button class="btn btn-mini btn-default pull-right buttonHover" @click="onClose"> -->
-            <span class="icon icon-cancel pull-right menuButton" @click="onClose"></span>
+          <span
+            class="icon icon-cancel pull-right menuButton"
+            @click="onClose"
+          ></span>
           <!-- </button> -->
           <!-- <button class="btn btn-mini btn-default pull-right buttonHover" @click="minimize"> -->
-            <span class="icon icon-minus pull-right menuButton" @click="minimize"></span>
+          <span
+            class="icon icon-minus pull-right menuButton"
+            @click="minimize"
+          ></span>
           <!-- </button> -->
         </div>
       </div>
@@ -30,7 +43,7 @@
 
 <script>
 import github from './services/github'
-const {remote} = require('electron')
+const { remote } = require('electron')
 
 export default {
   name: 'bulk-modem-tool',
@@ -65,12 +78,13 @@ export default {
     },
     getMenu () {
       const BrowserWindow = remote.BrowserWindow
-      const winURL = process.env.NODE_ENV === 'development'
-        ? 'http://localhost:9080/#/info'
-        : `file://${__dirname}/index.html#info`
+      const winURL =
+        process.env.NODE_ENV === 'development'
+          ? 'http://localhost:9080/#/info'
+          : `file://${__dirname}/index.html#info`
       const top = remote.getCurrentWindow()
-      const x = (top.getPosition()[0]) + 50
-      const y = (top.getPosition()[1]) + 50
+      const x = top.getPosition()[0] + 50
+      const y = top.getPosition()[1] + 50
       this.blur = true
 
       const window = new BrowserWindow({

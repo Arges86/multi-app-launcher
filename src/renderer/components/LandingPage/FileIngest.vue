@@ -1,14 +1,19 @@
 <template>
   <!-- <div> -->
-    <button class="btn btn-mini btn-default buttonHover" type="file" accept=".exe" @click="openfile">
-     Pick File <span style="color: green;" class="icon icon-cog"></span>
-    </button>
+  <button
+    class="btn btn-mini btn-default buttonHover"
+    type="file"
+    accept=".exe"
+    @click="openfile"
+  >
+    Pick File <span style="color: green" class="icon icon-cog"></span>
+  </button>
   <!-- </div> -->
 </template>
 
 <script>
 import config from '../../assets/config'
-const {remote} = require('electron')
+const { remote } = require('electron')
 
 export default {
   props: {
@@ -21,7 +26,7 @@ export default {
       const file = ev.target.files[0]
       const reader = new FileReader()
 
-      reader.onload = e => this.$emit('load', e.target.result)
+      reader.onload = (e) => this.$emit('load', e.target.result)
       reader.readAsText(file)
     },
     async openfile () {
@@ -34,8 +39,8 @@ export default {
           title: 'Find a Program',
           buttonLabel: 'Pick file',
           filters: [
-            {name: 'Executable', extensions: ['exe']},
-            {name: 'All Files', extensions: ['*']}
+            { name: 'Executable', extensions: ['exe'] },
+            { name: 'All Files', extensions: ['*'] }
           ],
           properties: ['openFile']
         }
@@ -45,8 +50,8 @@ export default {
           buttonLabel: 'Pick shortcut',
           defaultPath: config.LinuxPath,
           filters: [
-            {name: 'Shortcut', extensions: ['desktop']},
-            {name: 'All Files', extensions: ['*']}
+            { name: 'Shortcut', extensions: ['desktop'] },
+            { name: 'All Files', extensions: ['*'] }
           ],
           properties: ['openFile']
         }
