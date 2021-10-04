@@ -32,14 +32,14 @@
 
 <script>
 import github from '../services/github'
-const remote = require('electron').remote
+import { app } from '@electron/remote'
 
 export default {
   name: 'app-info',
   data: () => ({
-    version: remote.app.getVersion(), // applications sem version
-    name: remote.app.name, // applications name from json file
-    ProcessMetric: remote.app.getAppMetrics(), // Array of ProcessMetric objects
+    version: app.getVersion(), // applications sem version
+    name: app.name, // applications name from json file
+    ProcessMetric: app.getAppMetrics(), // Array of ProcessMetric objects
     releases: [], // return from querying github releases
     updateStatus: '', // text to display on apps status
     updateAvailable: false // boolean if update is available, to show:hide download button

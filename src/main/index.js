@@ -1,7 +1,10 @@
 'use strict'
 
-import { app, BrowserWindow } from 'electron'
-const contextMenu = require('electron-context-menu')
+import { app, BrowserWindow, ipcMain, dialog } from 'electron'
+import settings from 'electron-settings'
+import contextMenu from 'electron-context-menu'
+import * as remoteMain from '@electron/remote/main'
+remoteMain.initialize()
 
 /**
  * Set `__static` path to static files in production
@@ -9,6 +12,69 @@ const contextMenu = require('electron-context-menu')
  */
 if (process.env.NODE_ENV !== 'development') {
   global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
+}
+
+ipcMain.handle('get-settings', async (event, args) => {
+  const allSettings = await settings.get()
+  return allSettings
+})
+
+ipcMain.handle('delete-profile', async (event, profile) => {
+  return settings.unsetSync(profile)
+})
+
+ipcMain.handle('set-profile', async (event, name, values) => {
+  settings.setSync(name, values)
+})
+
+ipcMain.handle('file-picker', async (event, options) => {
+  const filePath = await dialog.showOpenDialog(options)
+  return filePath
+})
+
+ipcMain.on('open-info', async (event, options) => {
+  console.log('Opening child window')
+  const window = createChildWindow()
+
+  window.on('close', () => {
+    event.reply('close-info', true)
+  })
+})
+
+let childWindow
+function createChildWindow () {
+  const winURL =
+  process.env.NODE_ENV === 'development'
+    ? 'http://localhost:9080/#/info'
+    : `file://${__dirname}/index.html#info`
+  const x = mainWindow.getPosition()[0] + 50
+  const y = mainWindow.getPosition()[1] + 50
+
+  childWindow = new BrowserWindow({
+    height: 300,
+    width: 300,
+    x,
+    y,
+    minimizable: false,
+    maximizable: false,
+    useContentSize: true,
+    type: 'toolbar',
+    frame: true,
+    parent: mainWindow,
+    modal: true,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      nodeIntegrationInWorker: true,
+      enableRemoteModule: true
+    }
+  })
+  childWindow.setMenu(null)
+
+  remoteMain.enable(childWindow.webContents)
+  childWindow.loadURL(winURL)
+
+  return childWindow
 }
 
 let mainWindow
@@ -29,12 +95,14 @@ function createWindow () {
     frame: false,
     webPreferences: {
       nodeIntegration: true,
+      contextIsolation: false,
       nodeIntegrationInWorker: true,
       enableRemoteModule: true
     }
   })
   mainWindow.setMenu(null)
 
+  remoteMain.enable(mainWindow.webContents)
   mainWindow.loadURL(winURL)
 
   mainWindow.on('closed', () => {

@@ -200,11 +200,10 @@ import FileIngest from './LandingPage/FileIngest'
 import Modal from './LandingPage/Modal.vue'
 import Vue from 'vue'
 import path from 'path'
-import settings from 'electron-settings'
 import config from '../assets/config'
 import parser from '../services/linuxparse'
-const { shell } = require('electron')
-const app = require('electron').remote.app
+const { shell, ipcRenderer } = require('electron')
+const appr = require('@electron/remote').app
 const number = 5 // cheating with global number so it can be reused
 
 class Program {
@@ -225,7 +224,7 @@ export default {
     profiles: [], // array of user profiles
     numbers: number, // default number of program boxes
     showDropdown: false, // toggles the profile picker dropdown
-    allSettings: settings, // object of all user settings
+    allSettings: {}, // object of all user settings
     oldName: null, // old profile name when renaming profile
     allPrograms: [], // array of applications found on default location
     search: '', // string to filter 'allPrograms' by
@@ -241,8 +240,8 @@ export default {
   },
   methods: {
     /** Gets all profiles from system settings */
-    getProfiles () {
-      this.allSettings = settings.getSync()
+    async getProfiles () {
+      this.allSettings = await ipcRenderer.invoke('get-settings')
       if (this.allSettings) {
         Object.entries(this.allSettings).forEach(([key, value]) =>
           this.profiles.push(key)
@@ -262,9 +261,9 @@ export default {
         }
       })
     },
-    /** Deletes a rpfile from settings */
-    deleteProfile (profile) {
-      settings.unsetSync(profile)
+    /** Deletes a profile from settings */
+    async deleteProfile (profile) {
+      await ipcRenderer.invoke('delete-profile', profile)
       this.profiles = []
       this.showDropdown = false
       this.getProfiles()
@@ -398,7 +397,7 @@ export default {
       this.optionsIndex = null
     },
     /** Upon modal closal event, update profile list */
-    closeModal (data) {
+    async closeModal (data) {
       console.log(data)
       this.isModalVisible = false
       this.oldName = null
@@ -406,12 +405,14 @@ export default {
         // if renaming existing profile
         if (data.old) {
           const temp = this.allSettings[data.old]
-          settings.setSync(data.new, temp)
+          // settings.setSync(data.new, temp)
+          await ipcRenderer.invoke('set-profile', data.new, temp)
           this.deleteProfile(data.old)
 
           // if saving new profile
         } else if (data.new) {
-          settings.setSync(data.new, this.programs)
+          // settings.setSync(data.new, this.programs)
+          await ipcRenderer.invoke('set-profile', data.new, this.programs)
           this.profiles = []
           this.getProfiles()
         }
@@ -448,7 +449,7 @@ export default {
     async getImage (data) {
       let icon
       try {
-        const NativeImage = await app.getFileIcon(path.normalize(data.url))
+        const NativeImage = await appr.getFileIcon(path.normalize(data.url))
         icon = NativeImage.toDataURL()
 
         // sets a default icon
@@ -599,7 +600,7 @@ Vue.component('programIcon', {
             data = shell.readShortcutLink(data).target
           } catch (error) {}
         }
-        app.getFileIcon(data).then((NativeImage) => {
+        appr.getFileIcon(data).then((NativeImage) => {
           this.icon = NativeImage.toDataURL()
         })
       }
@@ -655,7 +656,7 @@ Vue.component('programIcon', {
 }
 
 .user-select {
-  -webkit-user-select: none;
+  user-select: none;
   cursor: default;
 }
 

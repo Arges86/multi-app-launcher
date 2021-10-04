@@ -13,7 +13,7 @@
 
 <script>
 import config from '../../assets/config'
-const { remote } = require('electron')
+import { ipcRenderer } from 'electron'
 
 export default {
   props: {
@@ -30,14 +30,12 @@ export default {
       reader.readAsText(file)
     },
     async openfile () {
-      const dialog = remote.dialog
-      const WIN = remote.getCurrentWindow()
-
       let options = {}
       if (process.platform === 'win32') {
         options = {
           title: 'Find a Program',
           buttonLabel: 'Pick file',
+          defaultPath: config.WindowsPath,
           filters: [
             { name: 'Executable', extensions: ['exe'] },
             { name: 'All Files', extensions: ['*'] }
@@ -57,8 +55,7 @@ export default {
         }
       }
 
-      let filePath = await dialog.showOpenDialog(WIN, options)
-
+      let filePath = await ipcRenderer.invoke('file-picker', options)
       if (filePath.canceled) {
         // console.log('Operation was canceled')
       } else {

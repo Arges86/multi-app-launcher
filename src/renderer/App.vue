@@ -43,10 +43,11 @@
 
 <script>
 import github from './services/github'
-const { remote } = require('electron')
+import { ipcRenderer } from 'electron'
+import { getCurrentWindow, app } from '@electron/remote'
 
 export default {
-  name: 'bulk-modem-tool',
+  name: 'multi-app-launcher',
   data: () => ({
     showStatus: false, // if update available icon is shown
     checkingStatus: false, // if checking for update icon is shown
@@ -57,10 +58,10 @@ export default {
   },
   methods: {
     onClose () {
-      remote.getCurrentWindow().close()
+      getCurrentWindow().close()
     },
     minimize () {
-      remote.getCurrentWindow().minimize()
+      getCurrentWindow().minimize()
     },
     async getReleases () {
       this.checkingStatus = true
@@ -69,7 +70,7 @@ export default {
         const latestVersion = release[0].tag_name
         const semver = require('semver')
         this.checkingStatus = false
-        if (semver.gt(latestVersion, remote.app.getVersion())) {
+        if (semver.gt(latestVersion, app.getVersion())) {
           this.showStatus = true
         }
       } catch (error) {
@@ -77,37 +78,10 @@ export default {
       }
     },
     getMenu () {
-      const BrowserWindow = remote.BrowserWindow
-      const winURL =
-        process.env.NODE_ENV === 'development'
-          ? 'http://localhost:9080/#/info'
-          : `file://${__dirname}/index.html#info`
-      const top = remote.getCurrentWindow()
-      const x = top.getPosition()[0] + 50
-      const y = top.getPosition()[1] + 50
       this.blur = true
+      ipcRenderer.send('open-info')
 
-      const window = new BrowserWindow({
-        height: 300,
-        width: 300,
-        x,
-        y,
-        minimizable: false,
-        maximizable: false,
-        useContentSize: true,
-        type: 'toolbar',
-        frame: true,
-        parent: top,
-        modal: true,
-        webPreferences: {
-          nodeIntegration: true,
-          enableRemoteModule: true
-        }
-      })
-      window.setMenu(null)
-      window.loadURL(winURL)
-
-      window.on('close', () => {
+      ipcRenderer.on('close-info', (event, arg) => {
         this.blur = false
       })
     }
