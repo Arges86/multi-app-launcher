@@ -1,18 +1,25 @@
 <template>
-  <div id="app" :class="[blur ? 'blur-app' : '']">
+  <div
+    id="app"
+    :class="[blur ? 'blur-app' : '']"
+  >
     <header class="toolbar toolbar-header">
       <div class="row">
         <div class="col-md-4">
-          <img @click="getMenu" class="ProgramIcon" src="~@/assets/icon.png" />
+          <img
+            class="ProgramIcon"
+            src="~@/assets/icon.png"
+            @click="getMenu"
+          >
           <span
             v-if="showStatus"
             class="icon icon-arrows-ccw status-icon"
-          ></span>
+          />
           <span
             v-if="showStatus"
-            @click="getMenu"
             class="icon icon-info-circled status-icon"
-          ></span>
+            @click="getMenu"
+          />
         </div>
         <div class="col-md-4">
           <span class="title">
@@ -22,71 +29,67 @@
           </span>
         </div>
         <div class="col-md-4">
-          <!-- <button class="btn btn-mini btn-default pull-right buttonHover" @click="onClose"> -->
           <span
             class="icon icon-cancel pull-right menuButton"
             @click="onClose"
-          ></span>
-          <!-- </button> -->
-          <!-- <button class="btn btn-mini btn-default pull-right buttonHover" @click="minimize"> -->
+          />
           <span
             class="icon icon-minus pull-right menuButton"
             @click="minimize"
-          ></span>
-          <!-- </button> -->
+          />
         </div>
       </div>
     </header>
-    <router-view></router-view>
+    <router-view />
   </div>
 </template>
 
 <script>
-import github from './services/github'
-import { ipcRenderer } from 'electron'
-import { getCurrentWindow, app } from '@electron/remote'
+import github from "./services/github";
+import { ipcRenderer } from "electron";
+import { getCurrentWindow, app } from "@electron/remote";
 
 export default {
-  name: 'multi-app-launcher',
+  name: "MultiAppLauncher",
   data: () => ({
     showStatus: false, // if update available icon is shown
     checkingStatus: false, // if checking for update icon is shown
     blur: false // toggles whole application blur
   }),
   mounted () {
-    this.getReleases()
+    this.getReleases();
   },
   methods: {
     onClose () {
-      getCurrentWindow().close()
+      getCurrentWindow().close();
     },
     minimize () {
-      getCurrentWindow().minimize()
+      getCurrentWindow().minimize();
     },
     async getReleases () {
-      this.checkingStatus = true
+      this.checkingStatus = true;
       try {
-        const release = await github.getReleases()
-        const latestVersion = release[0].tag_name
-        const semver = require('semver')
-        this.checkingStatus = false
+        const release = await github.getReleases();
+        const latestVersion = release[0].tag_name;
+        const semver = require("semver");
+        this.checkingStatus = false;
         if (semver.gt(latestVersion, app.getVersion())) {
-          this.showStatus = true
+          this.showStatus = true;
         }
       } catch (error) {
-        this.checkingStatus = false
+        this.checkingStatus = false;
       }
     },
     getMenu () {
-      this.blur = true
-      ipcRenderer.send('open-info')
+      this.blur = true;
+      ipcRenderer.send("open-info");
 
-      ipcRenderer.on('close-info', (event, arg) => {
-        this.blur = false
-      })
+      ipcRenderer.on("close-info", (_event, _arg) => {
+        this.blur = false;
+      });
     }
   }
-}
+};
 </script>
 
 <style>

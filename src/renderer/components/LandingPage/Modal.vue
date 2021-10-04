@@ -10,24 +10,33 @@
       >
         <!-- For Options dialog -->
         <span v-if="optionsIndex">
-          <header class="modal-header" id="modalTitle">
+          <header
+            id="modalTitle"
+            class="modal-header"
+          >
             Add options arguments &nbsp;
-            <span @click="close" class="icon icon-cancel close-button"></span>
+            <span
+              class="icon icon-cancel close-button"
+              @click="close"
+            />
           </header>
-          <section class="modal-body" id="modalDescription">
+          <section
+            id="modalDescription"
+            class="modal-body"
+          >
             <form>
               <div class="form-group">
                 <label for="options">Options</label>
                 <input
-                  type="text"
-                  class="form-control"
                   id="options"
                   ref="options"
-                  placeholder="-private-window"
                   v-model="optionsText"
-                  @keyup.enter="addOptions"
                   v-focus
-                />
+                  type="text"
+                  class="form-control"
+                  placeholder="-private-window"
+                  @keyup.enter="addOptions"
+                >
               </div>
             </form>
             <button
@@ -42,25 +51,35 @@
 
         <!-- For profile dialog -->
         <span v-else>
-          <header class="modal-header" id="modalTitle">
+          <header
+            id="modalTitle"
+            class="modal-header"
+          >
             <span v-if="oldName">Rename {{ oldName }} to:</span>
             <span v-else>Save Profile As:</span>
-            <span @click="close" class="icon icon-cancel close-button"></span>
+            <span
+              class="icon icon-cancel close-button"
+              @click="close"
+            />
           </header>
-          <section class="modal-body" id="modalDescription" v-if="reset">
+          <section
+            v-if="reset"
+            id="modalDescription"
+            class="modal-body"
+          >
             <form>
               <div class="form-group">
                 <label for="pofileName">Pofile Name</label>
                 <input
-                  type="text"
                   id="pofileName"
-                  class="form-control"
                   ref="pofileName"
-                  placeholder="Work Profile"
                   v-model="name"
-                  @keydown.enter="save"
                   v-focus
-                />
+                  type="text"
+                  class="form-control"
+                  placeholder="Work Profile"
+                  @keydown.enter="save"
+                >
               </div>
             </form>
             <button
@@ -79,56 +98,62 @@
 
 <script>
 export default {
-  name: 'modal',
+  name: "Modal",
+  directives: {
+    focus: {
+      inserted: function (el) {
+        el.focus();
+      }
+    }
+  },
   props: {
-    oldName: String, // If renaming profile, this is the existing name
+    oldName: {
+      type: String,
+      default: ""
+    }, // If renaming profile, this is the existing name
     reset: {
       type: Boolean,
       required: false,
       default: false
     }, // boolean value to nullify form so its blank
-    optionsIndex: Number // which program to add an options object to
+    optionsIndex: {
+      type: Number,
+      default: null
+    } // which program to add an options object to
   },
   data: () => ({
-    name: '', // user inputed name
-    optionsText: '' // user inputed options arguments
+    name: "", // user inputed name
+    optionsText: "" // user inputed options arguments
   }),
   watch: {
-    reset: function (data) {
-      this.name = null
-      this.optionsText = null
+    reset: function () {
+      this.name = null;
+      this.optionsText = null;
     }
   },
   methods: {
     close (event) {
-      event.preventDefault()
-      this.$emit('close')
+      event.preventDefault();
+      this.$emit("close");
     },
     save (event) {
-      console.log(event)
-      event.preventDefault()
+      console.log(event);
+      event.preventDefault();
       if (this.name) {
-        this.$emit('close', { new: this.name, old: this.oldName })
+        this.$emit("close", { new: this.name, old: this.oldName });
       }
     },
     addOptions (event) {
-      event.preventDefault()
+      event.preventDefault();
       if (this.optionsText) {
-        this.$emit('addOptions', {
+        this.$emit("addOptions", {
           id: this.optionsIndex,
           text: this.optionsText
-        })
-      }
-    }
-  },
-  directives: {
-    focus: {
-      inserted: function (el) {
-        el.focus()
+        });
       }
     }
   }
-}
+};
 </script>
 
 <style scoped>
