@@ -4,84 +4,100 @@
       <h4>App Info</h4>
     </div>
     <div>
-      <p>{{updateStatus}}</p>
+      <p>{{ updateStatus }}</p>
       <div class="mt-1">
-        <p><strong>Application Version:</strong> {{version}}</p>
-        <p><strong>Application Name:</strong> {{name}}</p>
+        <p><strong>Application Version:</strong> {{ version }}</p>
+        <p><strong>Application Name:</strong> {{ name }}</p>
         <p><strong>App Resources:</strong></p>
-        <p class="ml-1"><strong>CPU Usage:</strong> {{cpuUsage.toFixed(3)}} %</p>
-        <p class="ml-1"><strong>Memory Usage:</strong> {{memUsage.toLocaleString('en')}} KB</p>
+        <p class="ml-1">
+          <strong>CPU Usage:</strong> {{ cpuUsage.toFixed(3) }} %
+        </p>
+        <p class="ml-1">
+          <strong>Memory Usage:</strong> {{ memUsage.toLocaleString("en") }} KB
+        </p>
       </div>
     </div>
-    <div class="mt-1" v-if="updateAvailable">
-      <button class="btn btn-large btn-primary" @click="openLatest">
-        <span style="color: white;" class="icon icon-github-circled"></span> &nbsp;
-        Download newest version
+    <div
+      v-if="updateAvailable"
+      class="mt-1"
+    >
+      <button
+        class="btn btn-large btn-primary"
+        @click="openLatest"
+      >
+        <span
+          style="color: white"
+          class="icon icon-github-circled"
+        />
+        &nbsp; Download newest version
       </button>
       <div class="mt-1">
         <strong>Release Notes:</strong>
-        <pre>{{releases[0].body}}</pre>
+        <pre>{{ releases[0].body }}</pre>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import github from '../services/github'
-const remote = require('electron').remote
+import github from "../services/github";
+import { app } from "@electron/remote";
 
 export default {
-  name: 'app-info',
+  name: "AppInfo",
   data: () => ({
-    version: remote.app.getVersion(), // applications sem version
-    name: remote.app.name, // applications name from json file
-    ProcessMetric: remote.app.getAppMetrics(), // Array of ProcessMetric objects
+    version: app.getVersion(), // applications sem version
+    name: app.name, // applications name from json file
+    ProcessMetric: app.getAppMetrics(), // Array of ProcessMetric objects
     releases: [], // return from querying github releases
-    updateStatus: '', // text to display on apps status
+    updateStatus: "", // text to display on apps status
     updateAvailable: false // boolean if update is available, to show:hide download button
   }),
+  computed: {
+    cpuUsage () {
+      return this.ProcessMetric.map((data) => data.cpu.percentCPUUsage).reduce(
+        (a, b) => a + b
+      );
+    },
+    memUsage () {
+      return this.ProcessMetric.map(
+        (data) => data.memory.workingSetSize
+      ).reduce((a, b) => a + b);
+    }
+  },
   mounted () {
-    this.getReleases()
+    this.getReleases();
   },
   methods: {
     async getReleases () {
-      this.updateStatus = ''
-      this.updateAvailable = false
+      this.updateStatus = "";
+      this.updateAvailable = false;
       try {
-        this.releases = await github.getReleases()
-        this.getLatest(this.releases)
+        this.releases = await github.getReleases();
+        this.getLatest(this.releases);
       } catch (error) {
-        this.updateStatus = 'Error getting release info. Please try again later.'
+        this.updateStatus =
+          "Error getting release info. Please try again later.";
       }
     },
     getLatest (data) {
-      const semver = require('semver')
-      const latestVersion = data[0].tag_name
+      const semver = require("semver");
+      const latestVersion = data[0].tag_name;
 
       // if the current app version is less than latest in github
       if (semver.gt(latestVersion, this.version)) {
-        this.updateStatus = 'Newer version available!'
-        this.updateAvailable = true
+        this.updateStatus = "Newer version available!";
+        this.updateAvailable = true;
       } else {
-        this.updateStatus = 'Application up to date.'
+        this.updateStatus = "Application up to date.";
       }
     },
     openLatest () {
-      const { shell } = require('electron')
-      shell.openExternal(this.releases[0].html_url)
-    }
-  },
-  computed: {
-    cpuUsage () {
-      return this.ProcessMetric.map(data => data.cpu.percentCPUUsage)
-        .reduce((a, b) => a + b)
-    },
-    memUsage () {
-      return this.ProcessMetric.map(data => data.memory.workingSetSize)
-        .reduce((a, b) => a + b)
+      const { shell } = require("electron");
+      shell.openExternal(this.releases[0].html_url);
     }
   }
-}
+};
 </script>
 
 <style scoped>
