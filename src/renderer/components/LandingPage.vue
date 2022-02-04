@@ -472,7 +472,6 @@ export default {
     removeAllErrors () {
       const errors = document.getElementsByClassName("error");
       while (errors.length > 0) {
-        console.log(errors.length);
         const element = errors[0];
         element.parentNode.removeChild(element);
       }
@@ -484,7 +483,6 @@ export default {
     },
     /** Upon modal closal event, update profile list */
     async closeModal (data) {
-      console.log(data);
       this.isModalVisible = false;
       this.oldName = null;
       if (data) {
@@ -540,7 +538,6 @@ export default {
 
         // sets a default icon
       } catch (error) {
-        console.log(error);
         icon = config.defaultIcon;
       }
       const objIndex = this.programs.findIndex((obj) => obj.id === data.id);
