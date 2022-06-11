@@ -147,6 +147,17 @@
                     />Clear
                     <span class="tooltiptext">Clear program from grid</span>
                   </button>
+                  <button
+                    v-if="program.url"
+                    class="btn btn-mini btn-default buttonHover tooltip"
+                    @click="getProcInfo(program)"
+                  >
+                    <span
+                      style="color: red"
+                      class="icon icon-info"
+                    />
+                    <span class="tooltiptext">Gets Process Information</span>
+                  </button>
                 </div>
               </div>
               <div
@@ -232,6 +243,39 @@
         </div>
       </div>
 
+      <div v-if="info">
+        <transition name="modal-fade">
+          <div
+            class="modal-backdrop"
+            @click="info = null"
+          >
+            <div
+              class="modal"
+              role="dialog"
+              aria-labelledby="modalTitle"
+              aria-describedby="modalDescription"
+              style="position: relative"
+            >
+              <header
+                id="modalTitle"
+                class="modal-header"
+              >
+                Process Information
+                <span
+                  class="icon icon-cancel close-button"
+                  @click="info = null"
+                />
+              </header>
+              <section class="modal-body">
+                <pre>
+                  {{ info }}
+                </pre>
+              </section>
+            </div>
+          </div>
+        </transition>
+      </div>
+
       <modal
         v-show="isModalVisible"
         :reset="isModalVisible"
@@ -287,6 +331,7 @@ export default {
     search: "", // string to filter 'allPrograms' by
     searchId: 0, // which instnace of the 'programs' object is searching for an application
     optionsIndex: null, // which program to add an options object to
+    info: null,
     programs: Array(number)
       .fill(null)
       .map((_, i) => new Program(i + 1)) // array Program
@@ -495,7 +540,6 @@ export default {
 
           // if saving new profile
         } else if (data.new) {
-          // settings.setSync(data.new, this.programs)
           await ipcRenderer.invoke("set-profile", data.new, this.programs);
           this.profiles = [];
           this.getProfiles();
@@ -605,6 +649,54 @@ export default {
             }
           });
         }
+      });
+    },
+    /** Gets info on the process */
+    getProcInfo(program) {
+      const path = require("path");
+      this.info = null;
+      const splitted = program.url.split("\\");
+      const location = splitted[splitted.length - 1];
+      if (process.platform === "win32") {
+        this.callWindowsScript(path.parse(location).name)
+          .then((resp) => {
+            console.table(resp);
+            this.info = resp;
+          })
+          .catch((err) => {
+            console.log("err", err);
+            this.info = err;
+          });
+      }
+    },
+    callWindowsScript(program) {
+      const spawn = require("child_process").spawn;
+      let child = spawn("powershell.exe",[`
+      get-process ${program} | Format-Table Handles,ID,
+        @{Label="CPU(%)"; Expression = {
+            $TotalSec = (New-TimeSpan -Start $_.StartTime).TotalSeconds
+            [Math]::Round( ($_.CPU * 100 / $TotalSec), 2)
+        }},
+          @{Label = "RAM(MB)"; Expression = {
+            [Math]::Round($_.WS / 1MB, 2)
+        }},
+          @{Label="Running Time"; Expression={
+              $Dif = (Get-Date) - $_.StartTime
+              $Dif.toString().Split(".")[0]
+          }
+        } -AutoSize`]);
+      return new Promise((resolve, reject) => {
+        let output = "";
+        child.stdout.on("data",function(data){
+          output = output + data;
+        });
+        child.stderr.on("data",function(data){
+          reject(data.toString());
+        });
+        child.on("exit",function(){
+          resolve(output);
+        });
+        child.stdin.end();
       });
     },
     /** Gets task skill string based off of operating system */
@@ -991,5 +1083,84 @@ img {
     bottom: 0;
     opacity: 0;
   }
+}
+
+/* Modal Info */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 40;
+}
+
+.modal {
+  background: rgb(255, 255, 255);
+  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  max-height: 90%;
+}
+
+.modal-header,
+.modal-footer {
+  padding: 8px 0px 2px;
+  display: flex;
+}
+
+.close-button {
+  padding: 5px 12px;
+  position: absolute;
+  right: 0rem;
+  top: 0rem;
+}
+.close-button:hover {
+  color: rgb(255, 0, 0);
+  background-color: rgba(211, 211, 211, 0.65);
+}
+
+.modal-header {
+  border-bottom: 1px solid rgb(238, 238, 238);
+  color: #4aae9b;
+  justify-content: space-between;
+}
+
+#modalTitle {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+}
+
+.modal-footer {
+  border-top: 1px solid rgb(238, 238, 238);
+  justify-content: flex-end;
+}
+
+.modal-fade-enter,
+.modal-fade-leave-active {
+  opacity: 0;
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.modal-body {
+  position: relative;
+  padding: 20px 10px 40px 10px;
+}
+.modal-body pre {
+  font-size: 1em;
+  max-width: 800px;
+  overflow-x: hidden;
+  color: rgb(0, 0, 0);
+  margin: 0px 30px;
 }
 </style>
