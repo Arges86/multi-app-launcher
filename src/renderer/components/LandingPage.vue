@@ -725,7 +725,7 @@ Vue.component("ProgramIcon", {
   width: 100%;
   height: 15px;
   border-radius: 5px;
-  background: rgb(211, 211, 211);
+  background: rgb(5, 88, 182);
   outline: none;
   opacity: 0.7;
   -webkit-transition: 0.2s;
@@ -737,21 +737,35 @@ Vue.component("ProgramIcon", {
   opacity: 1;
 }
 
-.slider::-webkit-slider-thumb {
+input[type=range] {
   -webkit-appearance: none;
-  appearance: none;
-  display: block;
-  background: rgb(0, 0, 0);
-  border-radius: 100%;
-  width: 25px;
-  height: 25px;
-  margin: 0;
-  background: radial-gradient(
-    circle at 10px 10px,
-    rgb(92, 171, 255),
-    rgb(0, 0, 0)
-  );
+  width: 100%;
+}
+input[type=range]:focus {
+  outline: none;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 12.8px;
   cursor: pointer;
+  box-shadow: 0px 0px 0px rgb(0, 0, 0), 0px 0px 0px rgb(13, 13, 13);
+  background: rgb(3, 102, 214);
+  border-radius: 25px;
+  border: 0px solid rgb(0, 1, 1);
+}
+input[type=range]::-webkit-slider-thumb {
+  box-shadow: 0px 0px 0px rgb(0, 0, 0), 0px 0px 0px rgb(13, 13, 13);
+  border: 0px solid rgb(0, 0, 0);
+  height: 22px;
+  width: 22px;
+  border-radius: 20px;
+  background: rgb(255, 255, 255);
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -3.6px;
+}
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: rgb(81, 88, 181);
 }
 
 .program {
