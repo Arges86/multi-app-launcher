@@ -101,12 +101,15 @@
               v-if="index !== 0 && index % 4 === 0"
               class="row"
             />
+            
+            <!-- each program's div -->
             <div class="col-md-3 program">
               <div class="row">
                 <div class="user-select">
                   Choose your program
                 </div>
               </div>
+              <!-- row of buttons -->
               <div class="row">
                 <div
                   class="btn-group"
@@ -160,6 +163,7 @@
                   </button>
                 </div>
               </div>
+              <!-- Program drag and drop -->
               <div
                 v-if="!program.url && whichTextBox != program.id"
                 class="row"
@@ -176,6 +180,8 @@
                   </div>
                 </div>
               </div>
+
+              <!-- search program input row -->
               <div
                 v-if="whichTextBox == program.id"
                 class="row"
@@ -215,6 +221,8 @@
                   </div>
                 </div>
               </div>
+
+              <!-- program icon and location -->
               <div
                 v-if="program.url"
                 class="row-no-gutters small"
@@ -243,6 +251,7 @@
         </div>
       </div>
 
+      <!-- Process info modal -->
       <div v-if="info">
         <transition name="modal-fade">
           <div
@@ -667,11 +676,22 @@ export default {
             console.log("err", err);
             this.info = err;
           });
+      } else {
+        this.callUnixScript(path.parse(location).name)
+          .then((resp) => {
+            console.table(resp);
+            this.info = resp;
+          })
+          .catch((err) => {
+            console.log("err", err);
+            this.info = err;
+          });
       }
     },
+    /** Calls powershell program to get program info */
     callWindowsScript(program) {
-      const spawn = require("child_process").spawn;
-      let child = spawn("powershell.exe",[`
+      const { spawn } = require("child_process");
+      let child = spawn("powershell.exe", [`
       get-process ${program} | Format-Table Handles,ID,
         @{Label="CPU(%)"; Expression = {
             $TotalSec = (New-TimeSpan -Start $_.StartTime).TotalSeconds
@@ -685,6 +705,24 @@ export default {
               $Dif.toString().Split(".")[0]
           }
         } -AutoSize`]);
+      return new Promise((resolve, reject) => {
+        let output = "";
+        child.stdout.on("data",function(data){
+          output = output + data;
+        });
+        child.stderr.on("data",function(data){
+          reject(data.toString());
+        });
+        child.on("exit",function(){
+          resolve(output);
+        });
+        child.stdin.end();
+      });
+    },
+    /** Calls ps command to and filters by program name */
+    callUnixScript(program) {
+      const { spawn } = require("child_process");
+      let child = spawn("ps", [` -elf | head -n 1; ps -elf | grep -i ${program} | grep -v grep | grep -v "ps -elf"`]);
       return new Promise((resolve, reject) => {
         let output = "";
         child.stdout.on("data",function(data){
