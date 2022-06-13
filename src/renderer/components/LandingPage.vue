@@ -661,37 +661,25 @@ export default {
       });
     },
     /** Gets info on the process */
-    getProcInfo(program) {
+    async getProcInfo(program) {
       const path = require("path");
       this.info = null;
       const splitted = program.url.split("\\");
       const location = splitted[splitted.length - 1];
-      if (process.platform === "win32") {
-        this.callWindowsScript(path.parse(location).name)
-          .then((resp) => {
-            console.table(resp);
-            this.info = resp;
-          })
-          .catch((err) => {
-            console.log("err", err);
-            this.info = err;
-          });
-      } else {
-        this.callUnixScript(path.parse(location).name)
-          .then((resp) => {
-            console.table(resp);
-            this.info = resp;
-          })
-          .catch((err) => {
-            console.log("err", err);
-            this.info = err;
-          });
+      try {
+        if (process.platform === "win32") {
+          this.info = await this.callWindowsScript(path.parse(location).name);
+        } else {
+          this.info = await this.callUnixScript(path.parse(location).name);
+        }
+      } catch (error) {
+        this.info = error;
       }
     },
     /** Calls powershell program to get program info */
     callWindowsScript(program) {
       const { spawn } = require("child_process");
-      let child = spawn("powershell.exe", [`
+      const child = spawn("powershell.exe", [`
       get-process ${program} | Format-Table Handles,ID,
         @{Label="CPU(%)"; Expression = {
             $TotalSec = (New-TimeSpan -Start $_.StartTime).TotalSeconds
@@ -721,20 +709,15 @@ export default {
     },
     /** Calls ps command to and filters by program name */
     callUnixScript(program) {
-      const { spawn } = require("child_process");
-      let child = spawn("ps", [` -elf | head -n 1; ps -elf | grep -i ${program} | grep -v grep | grep -v "ps -elf"`]);
+      const { exec } = require("child_process");
       return new Promise((resolve, reject) => {
-        let output = "";
-        child.stdout.on("data",function(data){
-          output = output + data;
+        exec(`ps -elf | head -n 1; ps -elf | grep -i ${program} | 
+          grep -v grep | grep -v "ps -elf"`, (err, stdout, _stderr) => {
+          if (err) {
+            reject(err);
+          }
+          resolve(stdout);
         });
-        child.stderr.on("data",function(data){
-          reject(data.toString());
-        });
-        child.on("exit",function(){
-          resolve(output);
-        });
-        child.stdin.end();
       });
     },
     /** Gets task skill string based off of operating system */
